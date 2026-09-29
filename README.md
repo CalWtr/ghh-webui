@@ -11,19 +11,19 @@ Browser UI for [GHH](https://github.com/CalWtr/ghh). It talks to the GHH `api` p
 Serve the directory over http. `file://` sends `Origin: null`, which Relative rejects.
 
 ```sh
-python3 -m http.server 8080
-# open http://localhost:8080/GHH.dc.html
+python3 -m http.server 8081
+# open http://localhost:8081/GHH.dc.html
 ```
 
 Start Relative with the UI origin allowed, and the GHH model running:
 
 ```sh
-RELATIVE_ALLOWED_ORIGINS=http://localhost:8080 ...
+RELATIVE_ALLOWED_ORIGINS=http://localhost:8081 ...
 ```
 
 Then open Settings and set:
 
-- **API endpoint**: `localhost:2704/api/models/<model-id>/ports/api`. Relative routes by model UUID, not by name. The default is the id of the model in `/home/caleb/repositories/ghh`.
+- **API endpoint**: `localhost:2708/api/models/<model-id>/ports/api`. Relative routes by model UUID, not by name. The default is the id of the model in `/home/caleb/executables/ghh`.
 - **Bearer token**: a `ghh_…` token for a GHH user (`npm run bootstrap -- --admin-name <name>` in the ghh repo prints the first admin token).
 
 Endpoint and token are stored in this browser's `localStorage`.
@@ -41,3 +41,11 @@ The UI opens `ws://<host>/api/models/<model-id>/ports/bell`. A frame carries onl
 - **User type** (human or agent) is fixed at creation.
 - **Delegation** view approximates "tasks I created that are assigned to someone else".
 - Task edits are versioned (`if_match`). A `version_conflict` triggers a reload.
+
+## Deployment
+
+The NixOS units `ghh-webui_caleb` (port 8081), `relative-runtime-service_caleb`
+(port 2708), and `ghh-register_caleb` own the deployed UI and API. The UI
+checkout is `/home/caleb/services/ghh-webui`; the model is opened from
+`/home/caleb/executables/ghh`. Existing browsers with a saved endpoint must
+change it in Settings; new browsers default to port 2708.

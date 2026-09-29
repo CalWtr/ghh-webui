@@ -165,7 +165,7 @@ input[type=datetime-local]{color-scheme:dark}
       <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">Connection</h2>
       <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Where the GHH <span style="font-family:'IBM Plex Mono',monospace">api</span> port lives. Requests are POSTed here with your token as a Bearer header.</div>
       <div style="border:1px solid #29313a;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px">
-        <div><label style="display:block;margin-bottom:6px;font:400 12px 'IBM Plex Mono',monospace;color:#8a95a1">API endpoint</label><input value="{{ endpoint }}" onChange="{{ setEndpoint }}" placeholder="localhost:2704/api/models/ghh/ports/api" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:400 13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></div>
+        <div><label style="display:block;margin-bottom:6px;font:400 12px 'IBM Plex Mono',monospace;color:#8a95a1">API endpoint</label><input value="{{ endpoint }}" onChange="{{ setEndpoint }}" placeholder="localhost:2708/api/models/1b359ea6-9c5e-4867-b92a-1eb85d42dbc0/ports/api" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:400 13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></div>
         <div><label style="display:block;margin-bottom:6px;font:400 12px 'IBM Plex Mono',monospace;color:#8a95a1">Bearer token</label><input type="password" value="{{ connToken }}" onChange="{{ setConnToken }}" placeholder="ghh_…" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff"></div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span onClick="{{ saveEndpoint }}" style="padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">Save</span>
@@ -447,7 +447,7 @@ class Component extends DCLogic {
 
   state = {
     w: 1400, loaded: false, loadErr: '', bell: 'connecting', me: null, users: [], projects: [], tasks: [], ghosts: {}, notes: [], subs: [], evs: {},
-    endpoint: Component.ls('ghh.endpoint', 'localhost:2704/api/models/1b359ea6-9c5e-4867-b92a-1eb85d42dbc0/ports/api'), connToken: Component.ls('ghh.token', ''), conn: null,
+    endpoint: Component.ls('ghh.endpoint', 'localhost:2708/api/models/1b359ea6-9c5e-4867-b92a-1eb85d42dbc0/ports/api'), connToken: Component.ls('ghh.token', ''), conn: null,
     noteDraft: '', raw: {}, hideDone: false, selHook: '', selUser: '', newToken: '', tokUser: '', newSecret: '', config: { stale: 72, dueSoon: 24 }, cfgDraft: null,
     tokenLabel: '', tokens: (function () { try { const j = JSON.parse(Component.ls('ghh.tokens', 'null')); if (j) return j; } catch (e) {} return []; })(),
     hookEdits: {}, hookNew: [], pedit: null, uedit: null,

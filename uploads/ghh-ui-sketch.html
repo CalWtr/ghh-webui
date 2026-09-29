@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GHH</title>
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-subtle: #161b22;
+      --bg-hover: #1c2128;
+      --bg-input: #0d1117;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --radius: 6px;
+      --topbar-height: 64px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Helvetica,
+        Arial,
+        sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+      color: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px minmax(500px, 1fr) 420px;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+
+    .sidebar {
+      display: grid;
+      grid-template-rows: var(--topbar-height) 1fr 64px;
+      background: var(--bg-subtle);
+      border-right: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      height: var(--topbar-height);
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .nav {
+      padding: 16px 8px;
+    }
+
+    .nav-section-title {
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      margin: 2px 0;
+      border-radius: var(--radius);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-hover);
+    }
+
+    .nav a.active {
+      background: #21262d;
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      width: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: #21262d;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .username {
+      flex: 1;
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .icon-button:hover {
+      background: var(--bg-hover);
+      border-color: var(--border);
+    }
+
+    /* Main */
+
+    .main {
+      display: grid;
+      grid-template-rows: var(--topbar-height) 1fr;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .main-header {
+      display: flex;
+      align-items: center;
+      height: var(--topbar-height);
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back {
+      font-size: 20px;
+    }
+
+    .tab-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .search {
+      width: min(320px, 40%);
+      margin-left: auto;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .search::placeholder {
+      color: var(--muted);
+    }
+
+    .search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    .content {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .list-container {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+
+    .list-header,
+    .list-row {
+      display: grid;
+      grid-template-columns:
+        minmax(260px, 1fr)
+        140px
+        150px
+        150px;
+      align-items: center;
+    }
+
+    .list-header {
+      min-height: 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .list-row {
+      min-height: 58px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .list-row:last-child {
+      border-bottom: 0;
+    }
+
+    .list-row:hover {
+      background: var(--bg-hover);
+    }
+
+    .cell {
+      min-width: 0;
+      padding: 10px 12px;
+    }
+
+    .task-title {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .task-description {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-subtle);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    /* Editor */
+
+    .editor {
+      display: grid;
+      grid-template-rows: var(--topbar-height) auto auto 1fr;
+      overflow: auto;
+      border-left: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      height: var(--topbar-height);
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .editor-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .editor-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .input,
+    .textarea,
+    .select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .input:focus,
+    .textarea:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    .dependency {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-subtle);
+      font-size: 13px;
+    }
+
+    .dependency-name {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 190px 1fr 340px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <aside class="sidebar">
+      <div class="logo">
+        GHH
+      </div>
+
+      <nav class="nav">
+        <div class="nav-section-title">Workspace</div>
+
+        <a href="#" class="active">
+          <span class="nav-icon">☑</span>
+          Tasks
+        </a>
+
+        <a href="#">
+          <span class="nav-icon">▣</span>
+          Projects
+        </a>
+
+        <a href="#">
+          <span class="nav-icon">↗</span>
+          Delegation
+        </a>
+
+        <a href="#">
+          <span class="nav-icon">◷</span>
+          Scheduled
+        </a>
+
+        <a href="#">
+          <span class="nav-icon">●</span>
+          Active
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="avatar">A</div>
+        <div class="username">username</div>
+
+        <button class="icon-button" aria-label="Settings">
+          ⚙
+        </button>
+      </div>
+    </aside>
+
+
+    <main class="main">
+
+      <header class="main-header">
+
+        <button class="icon-button back" aria-label="Back">
+          ‹
+        </button>
+
+        <div class="tab-name">
+          {{Tab Name}}
+        </div>
+
+        <input
+          class="search"
+          type="search"
+          placeholder="Search tasks..."
+        />
+
+      </header>
+
+
+      <div class="content">
+
+        <div class="list-container">
+
+          <div class="list-header">
+            <div class="cell">Task</div>
+            <div class="cell">State</div>
+            <div class="cell">Start</div>
+            <div class="cell">Due</div>
+          </div>
+
+
+          <div class="list-row">
+
+            <div class="cell">
+              <div class="task-title">
+                Example task
+              </div>
+
+              <div class="task-description">
+                Short description of this work item.
+              </div>
+            </div>
+
+            <div class="cell">
+              <div class="status">
+                <span class="status-dot"></span>
+                Active
+              </div>
+            </div>
+
+            <div class="cell muted">
+              Sep 24
+            </div>
+
+            <div class="cell muted">
+              Sep 28
+            </div>
+
+          </div>
+
+
+          <div class="list-row">
+
+            <div class="cell">
+              <div class="task-title">
+                Another task
+              </div>
+
+              <div class="task-description">
+                Placeholder work item.
+              </div>
+            </div>
+
+            <div class="cell">
+              <div class="status">
+                Planned
+              </div>
+            </div>
+
+            <div class="cell muted">
+              Sep 30
+            </div>
+
+            <div class="cell muted">
+              —
+            </div>
+
+          </div>
+
+
+          <div class="list-row">
+
+            <div class="cell">
+              <div class="task-title">
+                Dependency example
+              </div>
+
+              <div class="task-description">
+                Waiting on another work item.
+              </div>
+            </div>
+
+            <div class="cell">
+              <div class="status">
+                Blocked
+              </div>
+            </div>
+
+            <div class="cell muted">
+              —
+            </div>
+
+            <div class="cell muted">
+              Oct 02
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <aside class="editor">
+
+      <div class="editor-header">
+        <h1 class="editor-title">
+          Editor
+        </h1>
+      </div>
+
+
+      <section class="editor-section">
+
+        <div class="field">
+          <label class="field-label">
+            Name
+          </label>
+
+          <input
+            class="input"
+            type="text"
+            value="Example task"
+          />
+        </div>
+
+
+        <div class="field">
+          <label class="field-label">
+            Description
+          </label>
+
+          <textarea class="textarea">Short description of this work item.</textarea>
+        </div>
+
+      </section>
+
+
+      <section class="editor-section">
+
+        <h2 class="section-title">
+          State & schedule
+        </h2>
+
+
+        <div class="field">
+          <label class="field-label">
+            State
+          </label>
+
+          <select class="select">
+            <option>Active</option>
+            <option>Planned</option>
+            <option>Blocked</option>
+            <option>Completed</option>
+          </select>
+        </div>
+
+
+        <div class="field">
+          <label class="field-label">
+            Start
+          </label>
+
+          <input
+            class="input"
+            type="datetime-local"
+          />
+        </div>
+
+
+        <div class="field">
+          <label class="field-label">
+            Due
+          </label>
+
+          <input
+            class="input"
+            type="datetime-local"
+          />
+        </div>
+
+      </section>
+
+
+      <section class="editor-section">
+
+        <h2 class="section-title">
+          Dependencies
+        </h2>
+
+        <div class="dependency">
+          <span class="dependency-name">
+            relative-runtime
+          </span>
+
+          <span class="muted">
+            depends on
+          </span>
+        </div>
+
+        <div class="dependency">
+          <span class="dependency-name">
+            agent-worker
+          </span>
+
+          <span class="muted">
+            depended on by
+          </span>
+        </div>
+
+      </section>
+
+    </aside>
+
+  </div>
+</body>
+</html>

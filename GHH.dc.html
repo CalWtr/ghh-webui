@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./ghh-client.js"></script>
+<script src="./ghh-client.js?v=2"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -466,11 +466,13 @@ class Component extends DCLogic {
     if (mode === 'full' || !this._cold) this._needFull = true;
     if (this._rl) { this._again = true; return this._rl; }
     this._rl = (async () => {
+      let forced = false;
       do {
         this._again = false;
         try {
           if (this._needFull || Date.now() - this._coldAt > 30000) { this._needFull = false; this._cold = await GHH.loadCold(); this._coldAt = Date.now(); }
           const hot = await GHH.loadHot(this._cold.projects.map(p => p.id), this._cold.subs.some(x => x.channel === 'internal'));
+          if (hot.projectKey !== GHH.projectKey(this._cold.projects) && !forced) { forced = true; this._needFull = true; this._again = true; continue; }
           this.apply(Object.assign({}, this._cold, hot));
         } catch (e) {
           this._cold = null;

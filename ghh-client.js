@@ -110,10 +110,14 @@
     };
   }
 
+  // Identity of the project list, so a hot load can tell that cold data is stale.
+  const projectKey = (ps) => JSON.stringify(ps.map((p) => [p.id, p.name, p.desc, p.stale]).sort());
+
   async function loadHot(projectIds, withNotes) {
     const own = new Set(projectIds);
-    const [graphs, notes] = await Promise.all([
-      Promise.all(projectIds.map((id) => call('query.project_graph', { project_id: id }))), withNotes === false ? [] : all('query.notifications', {}, 50)
+    const [graphs, notes, projects] = await Promise.all([
+      Promise.all(projectIds.map((id) => call('query.project_graph', { project_id: id }))), withNotes === false ? [] : all('query.notifications', {}, 50),
+      all('query.projects', {})
     ]);
     const byId = new Map(), ghosts = {}, edges = new Set();
     for (const g of graphs) {
@@ -128,7 +132,7 @@
       const [a, b] = k.split('>'), t = byId.get(a);
       if (t) t.deps.push(b);
     }
-    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse() };
+    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse(), projectKey: projectKey(projects.map((p) => ({ id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours }))) };
   }
 
   async function snapshot() {
@@ -193,5 +197,5 @@
   const newSecret = () => hex(crypto.getRandomValues(new Uint8Array(32)));
   const sha256hex = async (text) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
-  window.GHH = { conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl };
+  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl };
 })();

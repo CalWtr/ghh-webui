@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./ghh-client.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -52,8 +53,8 @@ input[type=datetime-local]{color-scheme:dark}
     </sc-for>
   </nav>
   <div style="display:flex;align-items:center;justify-content:{{ navJ }};gap:10px;padding:12px;border-top:1px solid #29313a">
-    <div style="width:32px;height:32px;border-radius:50%;background:#2a323c;border:1px solid #29313a;display:grid;place-items:center;font-weight:600;font-size:13px">C</div>
-    <div style="display:{{ lbl }};flex:1;font-weight:500">Caleb</div>
+    <div style="width:32px;height:32px;border-radius:50%;background:#2a323c;border:1px solid #29313a;display:grid;place-items:center;font-weight:600;font-size:13px">{{ meIni }}</div>
+    <div style="display:{{ lbl }};flex:1;font-weight:500">{{ meName }}</div>
     <div onClick="{{ goSettings }}" style="width:32px;height:32px;border-radius:6px;display:{{ gear }};place-items:center;color:#8a95a1;cursor:pointer" style-hover="background:#1a2027">⚙</div>
   </div>
 </aside>
@@ -76,7 +77,7 @@ input[type=datetime-local]{color-scheme:dark}
       <div onClick="{{ newTask }}" style="flex:none;white-space:nowrap;padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer" style-hover="background:#9cc9ff">+ New task</div>
     </sc-if>
     <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}"><div onClick="{{ newProject }}" style="flex:none;white-space:nowrap;margin-left:auto;padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer" style-hover="background:#9cc9ff">+ New project</div></sc-if>
-    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}"><div onClick="{{ newUser }}" style="flex:none;white-space:nowrap;margin-left:auto;padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer" style-hover="background:#9cc9ff">+ New user</div></sc-if>
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}"><div onClick="{{ newUser }}" style="flex:none;white-space:nowrap;margin-left:auto;padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer" style-hover="background:#9cc9ff">+ New user</div><div onClick="{{ newAgent }}" style="flex:none;white-space:nowrap;margin-left:8px;padding:5px 14px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ New agent</div></sc-if>
   </div>
 
   <div style="padding:12px 20px 24px;overflow:auto;min-height:0">
@@ -109,6 +110,7 @@ input[type=datetime-local]{color-scheme:dark}
 
     <!-- Inbox -->
     <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ inboxOff }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px 16px;border:1px solid #4a3d24;border-radius:8px;background:#1d1a12"><span style="flex:1;font-size:13px;line-height:1.45">The inbox is off. Nothing is delivered until you have an internal subscription.</span><span onClick="{{ enableInbox }}" style="padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">Turn on</span></div></sc-if>
       <div style="border:1px solid #29313a;border-radius:8px;overflow:hidden">
         <sc-for list="{{ inboxRows }}" as="i" hint-placeholder-count="4">
           <div onClick="{{ i.open }}" style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid #29313a;cursor:pointer;background:{{ i.bg }}" style-hover="background:#1a2027">
@@ -172,7 +174,7 @@ input[type=datetime-local]{color-scheme:dark}
         </div>
       </div>
       <h2 style="margin:28px 0 4px;font-size:14px;font-weight:600">API tokens</h2>
-      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Tokens are generated in the browser. Only the SHA-256 is sent to GHH (<span style="font-family:'IBM Plex Mono',monospace">user.issue_token</span>). GHH stores no token names and has no list-tokens operation; this list is a local record, and labels stay in this browser only.</div>
+      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Tokens are generated in the browser. Only the SHA-256 is sent to GHH (<span style="font-family:'IBM Plex Mono',monospace">user.issue_token</span>). A user has one token: generating a new one replaces the old. Issuing your own token switches this browser to it automatically. GHH stores no token names and has no list-tokens operation; this list is a local record kept in this browser only.</div>
       <div style="border:1px solid #29313a;border-radius:8px;overflow:hidden">
         <sc-for list="{{ tokenRows }}" as="k" hint-placeholder-count="2">
           <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #29313a"><input value="{{ k.label }}" onChange="{{ k.rename }}" title="Local label" style="flex:1;min-width:0;padding:3px 6px;margin-left:-6px;border:1px solid transparent;border-radius:5px;background:transparent;outline:none;font-weight:500" style-hover="border-color:#29313a" style-focus="border-color:#6cb0ff;background:#0f1216"><span style="font:400 12px 'IBM Plex Mono',monospace;color:#8a95a1">{{ k.hash }}</span><span style="font-size:12px;color:#8a95a1;width:70px;text-align:right">{{ k.created }}</span></div>
@@ -335,9 +337,9 @@ input[type=datetime-local]{color-scheme:dark}
     <div style="height:64px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid #29313a"><h1 style="margin:0;font-size:16px;font-weight:600">Project</h1></div>
     <section style="padding:20px;border-bottom:1px solid #29313a">
       <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600">Name</label>
-      <input value="{{ pd.name }}" onChange="{{ pd.setName }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
+      <input value="{{ pd.name }}" onChange="{{ pd.setName }}" onBlur="{{ pd.commit }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
-      <textarea value="{{ pd.desc }}" onChange="{{ pd.setDesc }}" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      <textarea value="{{ pd.desc }}" onChange="{{ pd.setDesc }}" onBlur="{{ pd.commit }}" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
       <div onClick="{{ pd.viewTasks }}" style="margin-top:14px;display:inline-block;padding:6px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">View tasks</div>
     </section>
     <section style="padding:20px;border-bottom:1px solid #29313a">
@@ -369,8 +371,9 @@ input[type=datetime-local]{color-scheme:dark}
       <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600">URL</label>
       <input value="{{ hd.url }}" onChange="{{ hd.setUrl }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font-family:'IBM Plex Mono',monospace;font-size:13px" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Secret</label>
-      <input type="password" value="" placeholder="Write-only. Never returned by any read." style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
-      <div style="margin-top:6px;font-size:12px;color:#8a95a1">Deliveries carry X-GHH-Signature (HMAC-SHA256) and X-GHH-Event-Id.</div>
+      <input type="password" value="{{ hd.secret }}" onChange="{{ hd.setSecret }}" placeholder="Write-only. Leave blank on a new webhook to generate one." style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
+      <div style="margin-top:6px;font-size:12px;color:#8a95a1">Deliveries carry X-GHH-Signature (HMAC-SHA256) and X-GHH-Event-Id. Subscriptions cannot be edited: Save creates the new one and deletes the old, which needs a fresh secret.</div>
+      <sc-if value="{{ secretShown }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4a3f;border-radius:6px;background:#12201a"><div style="font:500 11px 'IBM Plex Mono',monospace;color:#5fc48a;letter-spacing:.06em">GENERATED SECRET · COPY NOW · NOT SHOWN AGAIN</div><div style="margin-top:4px;font-family:'IBM Plex Mono',monospace;word-break:break-all">{{ newSecret }}</div></div></sc-if>
     </section>
     <section style="padding:20px;border-bottom:1px solid #29313a">
       <h2 style="margin:0 0 10px;font-size:13px;font-weight:600">Event types</h2>
@@ -387,9 +390,8 @@ input[type=datetime-local]{color-scheme:dark}
     </section>
     <section style="padding:20px">
       <h2 style="margin:0 0 10px;font-size:13px;font-weight:600">Delivery</h2>
-      <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#8a95a1">Status</span><span>{{ hd.status }}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px"><span style="color:#8a95a1">Last attempt</span><span>{{ hd.last }}</span></div>
-      <div style="margin-top:6px;font-size:12px;color:#8a95a1;line-height:1.5">Failed deliveries retry after 1, 5 and 30 minutes, then are marked failed.</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#8a95a1">Subscription</span><span>{{ hd.status }}</span></div>
+      <div style="margin-top:6px;font-size:12px;color:#8a95a1;line-height:1.5">Failed deliveries retry after 1, 5 and 30 minutes, then stop. The API does not report per-delivery status.</div>
       <div style="display:flex;gap:8px;margin-top:16px"><span onClick="{{ hd.save }}" style="padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">Save</span><span onClick="{{ hd.remove }}" style="padding:5px 14px;border:1px solid #29313a;border-radius:6px;background:#151a20;color:#f0837a;font-weight:500;cursor:pointer">Delete</span></div>
     </section>
   </sc-if>
@@ -399,7 +401,7 @@ input[type=datetime-local]{color-scheme:dark}
     <section style="padding:20px;border-bottom:1px solid #29313a">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:36px;height:36px;border-radius:{{ ud.r }};background:{{ ud.bg }};color:{{ ud.fg }};display:grid;place-items:center;font:500 13px 'IBM Plex Mono',monospace;border:1px solid #29313a">{{ ud.ini }}</div>
-        <input value="{{ ud.name }}" onChange="{{ ud.setName }}" placeholder="Name" style="flex:1;min-width:0;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font-size:15px;font-weight:600" style-focus="border-color:#6cb0ff">
+        <input value="{{ ud.name }}" onChange="{{ ud.setName }}" onBlur="{{ ud.commitName }}" placeholder="Name" style="flex:1;min-width:0;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font-size:15px;font-weight:600" style-focus="border-color:#6cb0ff">
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:16px"><span style="font-size:13px;color:#8a95a1;margin-right:4px">Type</span>
         <sc-for list="{{ ud.kindPills }}" as="k" hint-placeholder-count="2"><span onClick="{{ k.go }}" style="padding:3px 12px;border-radius:999px;border:1px solid {{ k.bd }};background:{{ k.bg }};color:{{ k.fg }};font-size:13px;cursor:pointer">{{ k.label }}</span></sc-for>
@@ -429,60 +431,138 @@ input[type=datetime-local]{color-scheme:dark}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  static USERS0 = [
-    { id: 'caleb', name: 'Caleb', agent: false },
-    { id: 'maya', name: 'Maya', agent: false },
-    { id: 'coder-1', name: 'coder-1', agent: true },
-    { id: 'triage-bot', name: 'triage-bot', agent: true },
-    { id: 'research-1', name: 'research-1', agent: true }
-  ];
-  static PROJECTS0 = [
-    { id: 'p1', name: 'GHH Backend', desc: 'Relative model, SQLite store, scheduler and webhooks.', members: ['caleb', 'coder-1', 'triage-bot', 'research-1'], stale: 72 },
-    { id: 'p2', name: 'Web UI', desc: 'React web app and MCP server on top of the GHH API.', members: ['caleb', 'maya', 'coder-1'], stale: 48 }
-  ];
-  static TODAY = '2026-09-29';
-  static seed() {
-    const e = (w, t, a) => ({ w, t, a });
-    return {
-      tasks: [
-        { id: 't1', p: 'p1', name: 'Webhook retry worker', desc: 'Move delivery out of the graph run so slow receivers stop blocking API calls.', status: 'active', as: 'coder-1', by: 'caleb', start: '2026-09-24T09:00', due: '2026-09-28T17:00', deps: [], outcome: '', v: 4, ev: [e('Caleb', 'created this task', '5d ago'), e('Caleb', 'handed off to coder-1: "Worker should report results back through a port."', '5d ago'), e('coder-1', 'started', '5d ago'), e('coder-1', 'added a note: Prototype worker passes the retry timing tests; wiring the result port next.', '1d ago')] },
-        { id: 't2', p: 'p1', name: 'MCP server adapter', desc: 'Expose the api port ops as MCP tools so agents can hook in directly.', status: 'planned', as: 'caleb', by: '', start: '2026-09-30T09:00', due: '2026-10-04T17:00', deps: ['t1'], outcome: '', v: 1, ev: [e('Caleb', 'created this task', '4d ago'), e('Caleb', 'added prerequisite Webhook retry worker', '4d ago')] },
-        { id: 't3', p: 'p2', name: 'Design task editor', desc: 'Right-hand pane with actions, dependencies and activity.', status: 'active', as: 'maya', by: 'caleb', start: '2026-09-25T09:00', due: '2026-10-01T17:00', deps: [], outcome: '', v: 3, ev: [e('Caleb', 'created this task', '4d ago'), e('Caleb', 'handed off to Maya', '4d ago'), e('Maya', 'started', '3d ago')] },
-        { id: 't4', p: 'p2', name: 'Build list view in React', desc: 'Task table with filters, search and cursor pagination via next_after.', status: 'planned', as: 'coder-1', by: 'caleb', start: '', due: '2026-10-02T17:00', deps: ['t3'], outcome: '', v: 2, ev: [e('Caleb', 'created this task', '3d ago'), e('Caleb', 'handed off to coder-1: "Start once the editor design is finished."', '3d ago')] },
-        { id: 't5', p: 'p1', name: 'Triage stale tasks', desc: 'Review tasks with no activity past stale_after_hours and ping owners.', status: 'active', as: 'triage-bot', by: 'caleb', start: '2026-09-25T09:00', due: '', deps: [], outcome: '', v: 2, stale: '4d', ev: [e('Caleb', 'created this task', '6d ago'), e('triage-bot', 'started', '6d ago'), e('system', 'task.stale: no activity for 96h', '2h ago')] },
-        { id: 't6', p: 'p1', name: 'Draft API docs', desc: 'Operations table, error codes and webhook signature example.', status: 'done', as: 'caleb', by: '', start: '2026-09-20T09:00', due: '2026-09-25T17:00', deps: [], outcome: 'README covers ops, errors and webhooks.', v: 5, ev: [e('Caleb', 'created this task', '9d ago'), e('Caleb', 'started', '8d ago'), e('Caleb', 'finished: README covers ops, errors and webhooks.', '4d ago')] },
-        { id: 't7', p: 'p1', name: 'Evaluate token rotation', desc: 'Compare short-lived tokens against user.issue_token for agents.', status: 'planned', as: '', by: '', start: '', due: '2026-10-06T17:00', deps: [], outcome: '', v: 1, ev: [e('Caleb', 'created this task', '1d ago')] },
-        { id: 't8', p: 'p1', name: 'Webhook signature tests', desc: 'Verify X-GHH-Signature against the raw body, including replayed event ids.', status: 'active', as: 'research-1', by: 'caleb', start: '2026-09-28T09:00', due: '2026-09-30T17:00', deps: ['t1'], outcome: '', v: 2, ev: [e('Caleb', 'created this task', '2d ago'), e('Caleb', 'handed off to research-1', '2d ago'), e('research-1', 'started', '2d ago')] }
-      ],
-      inbox: [
-        { id: 'n1', type: 'task.overdue', task: 't1', text: 'Webhook retry worker was due Sep 28.', age: '11h ago', read: false },
-        { id: 'n2', type: 'task.stale', task: 't5', text: 'Triage stale tasks has had no activity for 96h.', age: '2h ago', read: false },
-        { id: 'n3', type: 'note.added', task: 't1', text: 'coder-1: Prototype worker passes the retry timing tests.', age: '1d ago', read: true },
-        { id: 'n4', type: 'task.handoff', task: 't3', text: 'Caleb handed Design task editor to Maya.', age: '4d ago', read: true }
-      ]
-    };
-  }
+  static EVENTS = ['task.created', 'task.updated', 'task.scheduled', 'task.state_changed', 'task.assigned', 'task.handed_off', 'task.deleted', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'dependency.added', 'dependency.removed', 'note.added', 'project.created', 'project.updated', 'project.archived', 'project.deleted', 'project.member_added', 'project.member_removed'];
+  static INBOX_TYPES = ['task.assigned', 'task.handed_off', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'note.added'];
+  static FIELDS = ['name', 'desc', 'start', 'due', 'deps', 'gates'];
+  static ls(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+  static lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
   componentDidMount() {
     this._kd = e => { const m = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase(); if (!m || !e.target.closest || !e.target.closest('[data-ed]')) return; if (k === 'z') { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); } else if (k === 'y') { e.preventDefault(); this.redo(); } else if (k === 's') { e.preventDefault(); this.saveDraft(); } };
     window.addEventListener('keydown', this._kd);
-    this._rs = () => this.setState({ w: window.innerWidth }); window.addEventListener('resize', this._rs); this._rs(); }
-  componentWillUnmount() { window.removeEventListener('keydown', this._kd); window.removeEventListener('resize', this._rs); }
-  state = Object.assign({ w: 1400, users: Component.USERS0.map(u => Object.assign({}, u)), endpoint: (function () { try { return localStorage.getItem('ghh.endpoint') || 'localhost:2704/api/models/ghh/ports/api'; } catch (e) { return 'localhost:2704/api/models/ghh/ports/api'; } })(), connToken: '', conn: null, noteDraft: '', projects: Component.PROJECTS0.map(p => Object.assign({}, p)), raw: {}, hideDone: false, admins: { caleb: true }, selHook: 'w1', selUser: 'caleb', newToken: '', tokUser: '',
-    config: { stale: 72, dueSoon: 24 },
-    tokenLabel: '', tokens: (function () { try { const j = JSON.parse(localStorage.getItem('ghh.tokens')); if (j) return j; } catch (e) {} return [{ label: 'Unlabeled', hash: '9f3ac1e0…', created: '12-09-2026' }, { label: 'Unlabeled', hash: '71be08d4…', created: '21-09-2026' }]; })(),
-    webhooks: [
-      { id: 'w1', url: 'https://agents.internal/ghh/events', types: ['task.unblocked', 'task.handoff'], project: 'p1', onlyMine: true, status: 'Delivered', last: '3 min ago' },
-      { id: 'w2', url: 'https://hooks.example.com/ghh-alerts', types: ['task.overdue', 'task.stale'], project: 'all', onlyMine: false, status: 'Retrying', last: 'Attempt 2 · next in 5 min' }
-    ], view: 'tasks', filter: 'all', q: '', sel: 't1', proj: 'all', selProj: 'p1', panel: null, outcome: '', handTo: 'coder-1', handNote: '', draft: '', toast: null }, Component.seed());
-
-  user(id) { return this.state.users.find(u => u.id === id); }
-  tk(id) { return this.state.tasks.find(t => t.id === id); }
-  eff(t) {
-    if ((t.status === 'planned' || t.status === 'active') && t.deps.some(d => this.tk(d).status !== 'done')) return 'blocked';
-    return t.status;
+    this._rs = () => this.setState({ w: window.innerWidth }); window.addEventListener('resize', this._rs); this._rs();
+    this.connect(true);
   }
+  componentWillUnmount() { window.removeEventListener('keydown', this._kd); window.removeEventListener('resize', this._rs); if (this._unbell) this._unbell(); clearTimeout(this._ring); }
+
+  state = {
+    w: 1400, loaded: false, loadErr: '', bell: 'connecting', me: null, users: [], projects: [], tasks: [], ghosts: {}, notes: [], subs: [], evs: {},
+    endpoint: Component.ls('ghh.endpoint', 'localhost:2704/api/models/1b359ea6-9c5e-4867-b92a-1eb85d42dbc0/ports/api'), connToken: Component.ls('ghh.token', ''), conn: null,
+    noteDraft: '', raw: {}, hideDone: false, selHook: '', selUser: '', newToken: '', tokUser: '', newSecret: '', config: { stale: 72, dueSoon: 24 }, cfgDraft: null,
+    tokenLabel: '', tokens: (function () { try { const j = JSON.parse(Component.ls('ghh.tokens', 'null')); if (j) return j; } catch (e) {} return []; })(),
+    hookEdits: {}, hookNew: [], pedit: null, uedit: null,
+    view: 'tasks', filter: 'all', q: '', sel: '', proj: 'all', selProj: '', panel: null, outcome: '', handTo: '', handNote: '', draft: null, toast: null
+  };
+
+  // ---- connection, loading, live updates -------------------------------
+  connect(initial) {
+    GHH.conf.endpoint = this.state.endpoint; GHH.conf.token = this.state.connToken;
+    if (this._unbell) this._unbell();
+    this._cold = null;
+    this.reload('full');
+    this._unbell = GHH.connectBell({ status: s => this.setState({ bell: s }), ring: () => { this._rung = Date.now(); clearTimeout(this._ring); this._ring = setTimeout(() => this.reload(['settings', 'admin', 'projects'].includes(this.state.view) ? 'full' : 'hot'), 120); } });
+  }
+  reload(mode) {
+    if (mode === 'full' || !this._cold) this._needFull = true;
+    if (this._rl) { this._again = true; return this._rl; }
+    this._rl = (async () => {
+      do {
+        this._again = false;
+        try {
+          if (this._needFull || Date.now() - this._coldAt > 30000) { this._needFull = false; this._cold = await GHH.loadCold(); this._coldAt = Date.now(); }
+          const hot = await GHH.loadHot(this._cold.projects.map(p => p.id), this._cold.subs.some(x => x.channel === 'internal'));
+          this.apply(Object.assign({}, this._cold, hot));
+        } catch (e) {
+          this._cold = null;
+          this.setState(s => ({ loadErr: e.message, view: !s.loaded ? 'settings' : s.view }));
+          if (e.code === 'unauthenticated') this.setState({ loaded: false, me: null });
+        }
+      } while (this._again);
+    })().then(() => { this._rl = null; }, () => { this._rl = null; });
+    return this._rl;
+  }
+  // After our own write the bell will trigger the refetch; fall back to fetching directly if it never rings.
+  after(mode) {
+    const t0 = Date.now();
+    if (this.state.bell !== 'live') return this.reload(mode);
+    clearTimeout(this._fb);
+    this._fb = setTimeout(() => { if (!(this._rung >= t0)) this.reload(mode); }, 3000);
+  }
+  patchEntity(op, r) {
+    if (!r || !r.id) return;
+    if (op === 'user.create') this.setState(s => ({ users: s.users.concat([GHH.adaptUser(r)]) }));
+    else if (op === 'project.create') this.setState(s => ({ projects: s.projects.concat([GHH.adaptProject(r, this.state.me ? [{ user_id: this.state.me.id }] : [])]) }));
+  }
+  patchTask(r) {
+    if (!r || !r.id || r.version == null || !r.project_id) return;
+    const t = GHH.adaptTask(r);
+    this.setState(s => {
+      const old = s.tasks.find(x => x.id === t.id);
+      if (r.deleted_at) return { tasks: s.tasks.filter(x => x.id !== t.id) };
+      if (old) { t.deps = old.deps; return { tasks: s.tasks.map(x => x.id === t.id ? t : x) }; }
+      return { tasks: s.tasks.concat([t]) };
+    });
+  }
+  apply(s) {
+    this.setState(old => {
+      const first = s.tasks[0], ok = (id, list) => list.some(x => x.id === id);
+      const sel = ok(old.sel, s.tasks) ? old.sel : (first ? first.id : '');
+      return {
+        loaded: true, loadErr: '', me: s.me, users: s.users, projects: s.projects, tasks: s.tasks, ghosts: s.ghosts, notes: s.notes, subs: s.subs,
+        config: s.config, sel, selProj: ok(old.selProj, s.projects) ? old.selProj : (s.projects[0] ? s.projects[0].id : ''),
+        selUser: ok(old.selUser, s.users) ? old.selUser : s.me.id, proj: old.proj === 'all' || ok(old.proj, s.projects) ? old.proj : 'all'
+      };
+    });
+    const sel = this.state.sel; if (sel) this.loadEvents(sel);
+  }
+  async loadEvents(id) {
+    if (!id) return;
+    try { const items = await GHH.all('query.events', { task_id: id }, 10); this.setState(s => ({ evs: Object.assign({}, s.evs, { [id]: items }) })); } catch (e) {}
+  }
+  pick(id) { this.setState({ sel: id, panel: null }); this.loadEvents(id); }
+  fail(e) { this.say(e.code || 'error', e.message); if (e.code === 'version_conflict') this.reload('hot'); }
+  async run(op, args, okMsg) {
+    try { const r = await GHH.mutate(op, args); this.say(op, okMsg || 'Done', true); if (/^task\./.test(op)) this.patchTask(r); else this.patchEntity(op, r); this.after(/^(task|dependency|notification)\./.test(op) ? 'hot' : 'full'); return r; }
+    catch (e) { this.fail(e); return null; }
+  }
+
+  // ---- lookups ----------------------------------------------------------
+  user(id) { return this.state.users.find(u => u.id === id); }
+  tk(id) { return this.state.tasks.find(t => t.id === id) || this.state.ghosts[id] || { id, p: '', name: '(not visible)', desc: '', status: 'planned', as: '', by: '', start: '', due: '', deps: [], outcome: '', v: 0, blocked: false, stale: false }; }
+  look() { return { user: id => this.user(id), task: id => this.tk(id) }; }
+  eff(t) { return (t.status === 'planned' || t.status === 'active') && t.blocked ? 'blocked' : t.status; }
   fmt(iso) { return iso ? iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4) : '—'; }
   fmtFull(iso) { return iso ? this.fmt(iso) + ' ' + (iso.slice(11, 16) || '00:00') : ''; }
+  overdue(t) { return !!t.due && t.due.slice(0, 10) < GHH.dayLocal(Date.now()) && (t.status === 'planned' || t.status === 'active'); }
+  ini(u) { return u.agent ? u.name.split(/[^a-z0-9]+/i).filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase() : (u.name[0] || '?').toUpperCase(); }
+  av(u) { return u ? { ini: this.ini(u), r: u.agent || u.system ? '5px' : '50%', bg: u.agent ? '#1b2b3f' : '#2a323c', fg: u.agent ? '#9cc9ff' : '#e4e9ee' } : { ini: '–', r: '50%', bg: 'transparent', fg: '#8a95a1' }; }
+  stateInfo(s) { return { planned: ['Planned', '#8a95a1'], active: ['Active', '#5fc48a'], blocked: ['Blocked', '#e0a14a'], done: ['Done', '#8f9bff'], canceled: ['Canceled', '#5b6570'] }[s]; }
+  say(code, msg, ok) {
+    clearTimeout(this._tt);
+    this.setState({ toast: { code, msg, ok } });
+    this._tt = setTimeout(() => this.setState({ toast: null }), 3800);
+  }
+  members(projectId) { const p = this.state.projects.find(x => x.id === projectId); return p ? p.members.map(id => this.user(id)).filter(Boolean) : []; }
+  label(u) { return u.name + (u.agent ? ' (agent)' : ''); }
+  reaches(from, target) {
+    const seen = new Set(); const walk = id => { if (id === target) return true; if (seen.has(id)) return false; seen.add(id); return this.tk(id).deps.some(walk); };
+    return walk(from);
+  }
+  visible() {
+    const { tasks, filter, proj, q, hideDone, me } = this.state;
+    return tasks.filter(t => {
+      const e = this.eff(t);
+      if (hideDone && (t.status === 'done' || t.status === 'canceled')) return false;
+      if (proj !== 'all' && t.p !== proj) return false;
+      if (filter === 'delegation' && !(me && t.by === me.id && t.as && t.as !== me.id)) return false;
+      if (filter === 'scheduled' && !(t.status === 'planned' && t.start)) return false;
+      if (filter === 'active' && e !== 'active') return false;
+      if (q && !(t.name + ' ' + t.desc).toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+  }
+
+  // ---- task editor draft ------------------------------------------------
   commitRaw(t, k) {
     const v = this.state.raw[k]; if (v == null) return;
     this.setState(s => { const raw = Object.assign({}, s.raw); delete raw[k]; return { raw }; });
@@ -492,52 +572,6 @@ class Component extends DCLogic {
     if (!m || isNaN(new Date(iso)) || new Date(iso).getDate() !== +m[1]) return this.say('validation_failed', 'Use DD-MM-YYYY HH:mm.');
     this.edit(t, k, iso);
   }
-  overdue(t) { return t.due && t.due.slice(0, 10) < Component.TODAY && (t.status === 'planned' || t.status === 'active'); }
-  ini(u) { return u.agent ? u.name.split(/[^a-z0-9]+/i).map(p => p[0]).join('').slice(0, 2).toUpperCase() : u.name[0].toUpperCase(); }
-  av(u) { return u ? { ini: this.ini(u), r: u.agent ? '5px' : '50%', bg: u.agent ? '#1b2b3f' : '#2a323c', fg: u.agent ? '#9cc9ff' : '#e4e9ee' } : { ini: '–', r: '50%', bg: 'transparent', fg: '#8a95a1' }; }
-  stateInfo(s) { return { planned: ['Planned', '#8a95a1'], active: ['Active', '#5fc48a'], blocked: ['Blocked', '#e0a14a'], done: ['Done', '#8f9bff'], canceled: ['Canceled', '#5b6570'] }[s]; }
-  say(code, msg, ok) {
-    clearTimeout(this._tt);
-    this.setState({ toast: { code, msg, ok } });
-    this._tt = setTimeout(() => this.setState({ toast: null }), 3800);
-  }
-  upd(id, fn, evt) {
-    this.setState(s => ({ tasks: s.tasks.map(t => t.id !== id ? t : Object.assign({}, fn(t), { v: t.v + 1, ev: evt ? t.ev.concat([{ w: 'Caleb', t: evt, a: 'just now' }]) : t.ev })) }));
-  }
-  reaches(from, target) {
-    const seen = new Set(); const walk = id => { if (id === target) return true; if (seen.has(id)) return false; seen.add(id); return this.tk(id).deps.some(walk); };
-    return walk(from);
-  }
-  visible() {
-    const { tasks, filter, proj, q, hideDone } = this.state;
-    return tasks.filter(t => {
-      const e = this.eff(t);
-      if (hideDone && (t.status === 'done' || t.status === 'canceled')) return false;
-      if (proj !== 'all' && t.p !== proj) return false;
-      if (filter === 'delegation' && !(t.by === 'caleb' && t.as !== 'caleb')) return false;
-      if (filter === 'scheduled' && !(t.status === 'planned' && t.start)) return false;
-      if (filter === 'active' && e !== 'active') return false;
-      if (q && !(t.name + ' ' + t.desc).toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
-    });
-  }
-  newTok() { return 'ghh_' + Array.from(crypto.getRandomValues(new Uint8Array(20))).map(b => b.toString(16).padStart(2, '0')).join(''); }
-  async api(op, args, key) {
-    const raw = this.state.endpoint.trim(), url = /^https?:\/\//.test(raw) ? raw : 'http://' + raw;
-    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.state.connToken }, body: JSON.stringify({ request_id: crypto.randomUUID(), idempotency_key: key, command: { op, args } }) });
-    return (await res.json()).value;
-  }
-  async issueToken(userId) {
-    const tok = this.newTok(), buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tok)), hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    if (!this.state.connToken) { this.say('demo', 'No bearer token set under Connection: hash not sent to GHH.'); return { tok, hex }; }
-    try {
-      const v = await this.api('user.issue_token', { user_id: userId, token_sha256: hex }, 'issue-token-' + hex.slice(0, 12));
-      if (!v || !v.ok) { this.say(v && v.error ? v.error.code : 'internal', v && v.error ? v.error.message : 'Unexpected reply.'); return null; }
-    } catch (e) { this.say('unreachable', 'Could not reach ' + this.state.endpoint.trim()); return null; }
-    this.say('user.issue_token', 'Issued for ' + userId, true);
-    return { tok, hex };
-  }
-  static FIELDS = ['name', 'desc', 'start', 'due', 'deps', 'gates'];
   same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   gatesOf(id) { return this.state.tasks.filter(x => x.deps.includes(id)).map(x => x.id); }
   base(t) { return { name: t.name, desc: t.desc, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
@@ -551,19 +585,40 @@ class Component extends DCLogic {
   }
   undo() { this._lk = null; this.setState(s => { const d = s.draft; if (!d || !d.undo.length) return null; return { draft: Object.assign({}, d, { f: d.undo[d.undo.length - 1], undo: d.undo.slice(0, -1), redo: d.redo.concat([d.f]) }) }; }); }
   redo() { this._lk = null; this.setState(s => { const d = s.draft; if (!d || !d.redo.length) return null; return { draft: Object.assign({}, d, { f: d.redo[d.redo.length - 1], redo: d.redo.slice(0, -1), undo: d.undo.concat([d.f]) }) }; }); }
-  saveDraft() {
+  async saveDraft() {
     const d = this.state.draft; if (!d) return;
-    const t = this.tk(d.id), b0 = this.base(t), ch = Component.FIELDS.filter(k => !this.same(d.f[k], b0[k]));
+    const t = this.tk(d.id), b0 = this.base(t), F = d.f, ch = Component.FIELDS.filter(k => !this.same(F[k], b0[k]));
     if (!ch.length) return this.setState({ draft: null });
-    if (!d.f.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
-    const L = { name: 'name', desc: 'description', start: 'start', due: 'due', deps: 'prerequisites', gates: 'dependents' };
-    const F = d.f;
-    this.upd(t.id, x => Object.assign({}, x, { name: F.name, desc: F.desc, start: F.start, due: F.due, deps: F.deps }), 'updated ' + ch.filter(k => k !== 'gates').map(k => L[k]).join(', '));
-    b0.gates.filter(g => !F.gates.includes(g)).forEach(g => this.upd(g, y => Object.assign({}, y, { deps: y.deps.filter(z => z !== t.id) }), 'removed prerequisite ' + F.name));
-    this.setState({ draft: null });
-    this.say('task.update', 'Saved as v' + (t.v + 1), true);
+    if (!F.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
+    if (F.start && F.due && F.due < F.start) return this.say('validation_failed', 'Due must not be before start.');
+    const u = {};
+    if (ch.includes('name')) u.name = F.name.trim();
+    if (ch.includes('desc')) u.description = F.desc;
+    if (ch.includes('start') || ch.includes('due')) u.scheduling = { start: GHH.toMs(F.start), due: GHH.toMs(F.due) };
+    try {
+      if (Object.keys(u).length) this.patchTask(await GHH.mutate('task.update', Object.assign({ task_id: t.id, if_match: t.v }, u)));
+      for (const id of F.deps.filter(x => !b0.deps.includes(x))) await GHH.mutate('dependency.add', { task_id: t.id, depends_on_id: id });
+      for (const id of b0.deps.filter(x => !F.deps.includes(x))) await GHH.mutate('dependency.remove', { task_id: t.id, depends_on_id: id });
+      for (const g of b0.gates.filter(x => !F.gates.includes(x))) await GHH.mutate('dependency.remove', { task_id: g, depends_on_id: t.id });
+      this.setState({ draft: null });
+      this.say('task.update', 'Saved.', true);
+    } catch (e) { this.fail(e); }
+    this.after('hot');
   }
-  static EVENTS = ['task.unblocked', 'task.handoff', 'task.overdue', 'task.due_soon', 'task.stale', 'note.added'];
+  act(t, op, extra, msg) { return this.run(op, Object.assign({ task_id: t.id, if_match: t.v }, extra || {}), msg); }
+
+  // ---- tokens -----------------------------------------------------------
+  async issueToken(userId) {
+    const tok = GHH.newToken(), hex = await GHH.sha256hex(tok);
+    try { await GHH.mutate('user.issue_token', { user_id: userId, token_sha256: hex }); } catch (e) { this.fail(e); return null; }
+    this.say('user.issue_token', 'Issued for ' + ((this.user(userId) || {}).name || userId) + '; their previous token no longer works.', true);
+    if (this.state.me && userId === this.state.me.id) {
+      GHH.conf.token = tok; Component.lsSet('ghh.token', tok); this.setState({ connToken: tok });
+    }
+    return { tok, hex };
+  }
+
+  // ---- graph ------------------------------------------------------------
   graph(list) {
     const ids = new Set(list.map(t => t.id)), layer = {};
     const L = id => { if (layer[id] != null) return layer[id]; layer[id] = 0; const ds = this.tk(id).deps.filter(d => ids.has(d)); layer[id] = ds.length ? 1 + Math.max(...ds.map(L)) : 0; return layer[id]; };
@@ -580,77 +635,107 @@ class Component extends DCLogic {
       edges.push({ c, d: 'M' + x1 + ',' + y1 + ' C' + (x1 + 40) + ',' + y1 + ' ' + (x2 - 40) + ',' + y2 + ' ' + x2 + ',' + y2, head: 'M' + x2 + ',' + y2 + ' l-9,-5 l0,10 z' });
     }));
     const nodes = list.map(t => { const [state, dot] = this.stateInfo(this.eff(t)), a = this.av(this.user(t.as));
-      return { x: pos[t.id].x, y: pos[t.id].y, name: t.name, state, dot, ini: a.ini, r: a.r, bg: a.bg, fg: a.fg, bd: this.state.sel === t.id ? '#6cb0ff' : '#29313a', open: () => this.setState({ sel: t.id }) }; });
+      return { x: pos[t.id].x, y: pos[t.id].y, name: t.name, state, dot, ini: a.ini, r: a.r, bg: a.bg, fg: a.fg, bd: this.state.sel === t.id ? '#6cb0ff' : '#29313a', open: () => this.pick(t.id) }; });
     return { w: PAD * 2 + (maxL + 1) * W + maxL * GX, h: PAD * 2 + rowsMax * H + (rowsMax - 1) * GY, nodes, edges };
   }
+
+  // ---- settings and admin views -----------------------------------------
   extraVals(S, list) {
-    const U = this.state.users, P = this.state.projects, v = S.view, X = { isGraph: v === 'graph', isSettings: v === 'settings', isAdmin: v === 'admin', showTools: v === 'tasks' || v === 'graph' };
-    
-    X.newToken = S.newToken;
+    const U = S.users.filter(u => !u.system), P = S.projects, v = S.view, me = S.me, X = { isGraph: v === 'graph', isSettings: v === 'settings', isAdmin: v === 'admin', showTools: v === 'tasks' || v === 'graph' };
+    X.newToken = S.newToken; X.newSecret = S.newSecret; X.secretShown = !!S.newSecret;
     if (v === 'graph') X.g = this.graph(list);
     if (v === 'settings') {
-      X.endpoint = S.endpoint; X.connToken = S.connToken; X.connText = S.conn ? S.conn.text : ''; X.connColor = S.conn ? S.conn.color : '#8a95a1';
-      X.setEndpoint = ev => this.setState({ endpoint: ev.target.value, conn: null }); X.setConnToken = ev => this.setState({ connToken: ev.target.value });
-      X.saveEndpoint = () => { try { localStorage.setItem('ghh.endpoint', S.endpoint.trim()); } catch (e) {} this.say('config', 'Endpoint saved: ' + S.endpoint.trim(), true); };
+      X.endpoint = S.endpoint; X.connToken = S.connToken;
+      X.connText = S.conn ? S.conn.text : (S.loadErr || (S.loaded && me ? 'Connected as ' + me.name + '.' : '')); X.connColor = S.conn ? S.conn.color : (S.loadErr ? '#f0837a' : '#5fc48a');
+      X.setEndpoint = ev => this.setState({ endpoint: ev.target.value, conn: null }); X.setConnToken = ev => this.setState({ connToken: ev.target.value, conn: null });
+      X.saveEndpoint = () => { Component.lsSet('ghh.endpoint', S.endpoint.trim()); Component.lsSet('ghh.token', S.connToken); this.setState({ conn: null, loaded: false, loadErr: '' }); this.connect(); this.say('config', 'Saved. Reconnecting to ' + S.endpoint.trim(), true); };
       X.testConn = async () => {
-        const raw = S.endpoint.trim(); if (!raw) return this.setState({ conn: { text: 'Enter an endpoint first.', color: '#f0837a' } });
-        const url = /^https?:\/\//.test(raw) ? raw : 'http://' + raw;
+        if (!S.endpoint.trim()) return this.setState({ conn: { text: 'Enter an endpoint first.', color: '#f0837a' } });
+        GHH.conf.endpoint = S.endpoint; GHH.conf.token = S.connToken;
         this.setState({ conn: { text: 'Testing…', color: '#8a95a1' } });
-        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 4000);
-        try {
-          const res = await fetch(url, { method: 'POST', signal: ctl.signal, headers: Object.assign({ 'Content-Type': 'application/json' }, S.connToken ? { Authorization: 'Bearer ' + S.connToken } : {}), body: JSON.stringify({ request_id: crypto.randomUUID(), command: { op: 'query.me', args: {} } }) });
-          const j = await res.json(), val = j && j.value;
-          if (val && val.ok) this.setState({ conn: { text: 'Connected as ' + ((val.result && (val.result.name || (val.result.user && val.result.user.name))) || 'user') + '.', color: '#5fc48a' } });
-          else if (val && val.error) this.setState({ conn: { text: 'Reachable · ' + val.error.code, color: '#e0a14a' } });
-          else this.setState({ conn: { text: 'Reachable, unexpected reply (HTTP ' + res.status + ').', color: '#e0a14a' } });
-        } catch (e) { this.setState({ conn: { text: 'Unreachable: ' + (e.name === 'AbortError' ? 'timed out.' : 'network or CORS error.'), color: '#f0837a' } }); }
-        clearTimeout(to);
+        try { const me = await GHH.call('query.me'); this.setState({ conn: { text: 'Connected as ' + me.name + '.', color: '#5fc48a' } }); }
+        catch (e) { this.setState({ conn: { text: e.code + ': ' + e.message, color: e.code === 'unreachable' ? '#f0837a' : '#e0a14a' } }); }
       };
-      X.myTokenShown = !!S.newToken && S.tokUser === 'caleb';
-      const saveT = ts => { try { localStorage.setItem('ghh.tokens', JSON.stringify(ts)); } catch (e) {} };
+      X.myTokenShown = !!S.newToken && !!me && S.tokUser === me.id;
+      const saveT = ts => Component.lsSet('ghh.tokens', JSON.stringify(ts));
       X.tokenLabel = S.tokenLabel; X.setTokenLabel = ev => this.setState({ tokenLabel: ev.target.value });
-      X.tokenRows = S.tokens.map((k, i) => ({ label: k.label, hash: 'sha256 ' + k.hash, created: k.created, rename: ev => { const v = ev.target.value; this.setState(s => { const ts = s.tokens.map((x, j) => j === i ? Object.assign({}, x, { label: v }) : x); saveT(ts); return { tokens: ts }; }); } }));
+      X.tokenRows = S.tokens.map((k, i) => ({ label: k.label, hash: 'sha256 ' + k.hash, created: k.created, rename: ev => { const val = ev.target.value; this.setState(s => { const ts = s.tokens.map((x, j) => j === i ? Object.assign({}, x, { label: val }) : x); saveT(ts); return { tokens: ts }; }); } }));
       X.genToken = async () => {
-        const r = await this.issueToken('caleb'); if (!r) return;
+        if (!me) return this.say('unauthenticated', 'Connect first.');
+        const r = await this.issueToken(me.id); if (!r) return;
         const d = new Date(), pad = n => String(n).padStart(2, '0');
-        this.setState(s => { const ts = s.tokens.concat([{ label: s.tokenLabel.trim() || 'Unlabeled', hash: r.hex.slice(0, 8) + '…', created: pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear() }]); saveT(ts); return { newToken: r.tok, tokUser: 'caleb', tokenLabel: '', tokens: ts }; });
+        this.setState(s => { const ts = s.tokens.concat([{ label: s.tokenLabel.trim() || 'Unlabeled', hash: r.hex.slice(0, 8) + '…', created: pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear() }]); saveT(ts); return { newToken: r.tok, tokUser: me.id, tokenLabel: '', tokens: ts }; });
       };
-      X.newHook = () => { const id = 'w' + (S.webhooks.length + 1); this.setState(s => ({ selHook: id, webhooks: s.webhooks.concat([{ id, url: 'https://', types: [], project: 'all', onlyMine: false, status: 'Not saved', last: 'never' }]) })); };
-      const sc = { Delivered: '#5fc48a', Retrying: '#e0a14a', Failed: '#f0837a' };
-      X.hooks = S.webhooks.map(h => ({ url: h.url, status: h.status, sc: sc[h.status] || '#8a95a1', bg: S.selHook === h.id ? '#1a2027' : 'transparent',
-        meta: (h.types.length || 'no') + ' event types · ' + (h.project === 'all' ? 'all projects' : P.find(p => p.id === h.project).name) + (h.onlyMine ? ' · only mine' : ''),
-        open: () => this.setState({ selHook: h.id }) }));
-      const h = S.webhooks.find(x => x.id === S.selHook) || S.webhooks[0];
-      const set = fn => this.setState(s => ({ webhooks: s.webhooks.map(x => x.id === h.id ? fn(x) : x) }));
-      X.hd = { url: h.url, status: h.status, last: h.last, project: h.project, setUrl: ev => set(x => Object.assign({}, x, { url: ev.target.value })),
-        types: Component.EVENTS.map(e => { const on = h.types.includes(e); return { name: e, glyph: on ? '☑' : '☐', c: on ? '#6cb0ff' : '#8a95a1', toggle: () => set(x => Object.assign({}, x, { types: on ? x.types.filter(y => y !== e) : x.types.concat([e]) })) }; }),
-        projects: [{ id: 'all', label: 'All projects' }].concat(P.map(p => ({ id: p.id, label: p.name }))), setProject: ev => set(x => Object.assign({}, x, { project: ev.target.value })),
-        mineGlyph: h.onlyMine ? '☑' : '☐', mineColor: h.onlyMine ? '#6cb0ff' : '#8a95a1', toggleMine: () => set(x => Object.assign({}, x, { onlyMine: !x.onlyMine })),
-        save: () => this.say('subscription.create', 'Saved ' + h.url, true),
-        remove: () => { if (S.webhooks.length > 1) this.setState(s => ({ webhooks: s.webhooks.filter(x => x.id !== h.id), selHook: s.webhooks.find(x => x.id !== h.id).id })); else this.say('subscription.delete', 'Keep at least one for this demo.'); } };
+
+      // webhooks: subscriptions cannot be edited, so a save creates the new one and deletes the old
+      const blank = id => ({ id, url: 'https://', types: [], project: 'all', onlyMine: false, secret: '', isNew: true });
+      const saved = S.subs.filter(s => s.channel === 'webhook').map(s => ({ id: s.id, url: s.url, types: s.types.slice(), project: s.project_id || 'all', onlyMine: s.only_mine, secret: '', isNew: false }));
+      const all = saved.concat(S.hookNew.map(id => blank(id))).map(h => Object.assign({}, h, S.hookEdits[h.id] || {}));
+      const sc = { Active: '#5fc48a', Unsaved: '#e0a14a', 'Not saved': '#8a95a1' };
+      const stat = h => h.isNew ? 'Not saved' : S.hookEdits[h.id] ? 'Unsaved' : 'Active';
+      const pname = id => id === 'all' ? 'all projects' : ((P.find(p => p.id === id) || {}).name || 'unknown project');
+      X.newHook = () => { const id = 'new:' + Date.now(); this.setState(s => ({ selHook: id, hookNew: s.hookNew.concat([id]) })); };
+      X.hooks = all.map(h => ({ url: h.url, status: stat(h), sc: sc[stat(h)], bg: S.selHook === h.id ? '#1a2027' : 'transparent',
+        meta: (h.types.length || 'no') + ' event types · ' + pname(h.project) + (h.onlyMine ? ' · only mine' : ''), open: () => this.setState({ selHook: h.id }) }));
+      const h = all.find(x => x.id === S.selHook) || all[0] || Object.assign(blank(''), { none: true });
+      const patch = p => { if (h.none) return; this.setState(s => ({ hookEdits: Object.assign({}, s.hookEdits, { [h.id]: Object.assign({}, s.hookEdits[h.id] || {}, p) }) })); };
+      const drop = id => this.setState(s => { const e = Object.assign({}, s.hookEdits); delete e[id]; return { hookEdits: e, hookNew: s.hookNew.filter(x => x !== id), selHook: '' }; });
+      X.hd = { url: h.url, secret: h.secret, status: h.none ? '—' : stat(h), last: '—', project: h.project, setUrl: ev => patch({ url: ev.target.value }), setSecret: ev => patch({ secret: ev.target.value }),
+        types: Component.EVENTS.map(e => { const on = h.types.includes(e); return { name: e, glyph: on ? '☑' : '☐', c: on ? '#6cb0ff' : '#8a95a1', toggle: () => patch({ types: on ? h.types.filter(y => y !== e) : h.types.concat([e]) }) }; }),
+        projects: [{ id: 'all', label: 'All projects' }].concat(P.map(p => ({ id: p.id, label: p.name }))), setProject: ev => patch({ project: ev.target.value }),
+        mineGlyph: h.onlyMine ? '☑' : '☐', mineColor: h.onlyMine ? '#6cb0ff' : '#8a95a1', toggleMine: () => patch({ onlyMine: !h.onlyMine }),
+        save: async () => {
+          if (h.none) return;
+          if (!/^https?:\/\/.+/.test(h.url.trim())) return this.say('validation_failed', 'Enter the receiver URL (http or https).');
+          if (!h.types.length) return this.say('validation_failed', 'Pick at least one event type.');
+          if (h.secret && (h.secret.length < 32 || h.secret.length > 200)) return this.say('validation_failed', 'A secret is 32 to 200 characters. Leave it blank to generate one.');
+          const secret = h.secret || GHH.newSecret();
+          try {
+            await GHH.mutate('subscription.create', { channel: 'webhook', url: h.url.trim(), secret, types: h.types, project_id: h.project === 'all' ? null : h.project, only_mine: h.onlyMine });
+            if (!h.isNew) await GHH.mutate('subscription.delete', { subscription_id: h.id });
+            drop(h.id);
+            this.setState({ newSecret: h.secret ? '' : secret });
+            this.say('subscription.create', 'Saved ' + h.url, true);
+          } catch (e) { this.fail(e); }
+          this.after('full');
+        },
+        remove: async () => {
+          if (h.none) return;
+          if (h.isNew) return drop(h.id);
+          if (await this.run('subscription.delete', { subscription_id: h.id }, 'Deleted.')) drop(h.id);
+        } };
     }
     if (v === 'admin') {
-      X.userRows = U.map(u => Object.assign({ name: u.name, kind: u.agent ? 'agent' : 'human', role: S.admins[u.id] ? 'admin' : 'member', roleColor: S.admins[u.id] ? '#6cb0ff' : '#8a95a1', bg: S.selUser === u.id ? '#1a2027' : 'transparent', open: () => this.setState({ selUser: u.id }) }, (a => ({ ini: a.ini, r: a.r, avbg: a.bg, fg: a.fg }))(this.av(u))));
-      X.cfg = { stale: S.config.stale, dueSoon: S.config.dueSoon, setStale: ev => this.setState(s => ({ config: Object.assign({}, s.config, { stale: +ev.target.value }) })), setDue: ev => this.setState(s => ({ config: Object.assign({}, s.config, { dueSoon: +ev.target.value }) })),
-        save: () => this.say('config.update', 'stale_after_hours=' + S.config.stale + ', due_soon_hours=' + S.config.dueSoon, true) };
-      const u = this.user(S.selUser), a = this.av(u), adm = !!S.admins[u.id];
+      X.userRows = U.map(u => Object.assign({ name: u.name, kind: u.agent ? 'agent' : 'human', role: u.admin ? 'admin' : 'member', roleColor: u.admin ? '#6cb0ff' : '#8a95a1', bg: S.selUser === u.id ? '#1a2027' : 'transparent', open: () => this.setState({ selUser: u.id, uedit: null }) }, (a => ({ ini: a.ini, r: a.r, avbg: a.bg, fg: a.fg }))(this.av(u))));
+      const cd = S.cfgDraft || S.config;
+      X.cfg = { stale: cd.stale, dueSoon: cd.dueSoon, setStale: ev => this.setState({ cfgDraft: Object.assign({}, cd, { stale: +ev.target.value }) }), setDue: ev => this.setState({ cfgDraft: Object.assign({}, cd, { dueSoon: +ev.target.value }) }),
+        save: async () => {
+          if (!(cd.stale > 0) || !(cd.dueSoon > 0)) return this.say('validation_failed', 'Hours must be positive.');
+          if (await this.run('config.update', { stale_after_hours: cd.stale, due_soon_hours: cd.dueSoon }, 'stale_after_hours=' + cd.stale + ', due_soon_hours=' + cd.dueSoon)) this.setState({ cfgDraft: null });
+        } };
+      const u = U.find(x => x.id === S.selUser) || { id: '', name: '', agent: false, admin: false }, a = this.av(u.id ? u : null);
       X.userTokenShown = !!S.newToken && S.tokUser === u.id;
-      const upU = fn => this.setState(s => ({ users: s.users.map(x => x.id === u.id ? fn(x) : x) }));
-      X.newUser = () => { const id = 'u' + (S.users.length + 1); this.setState(s => ({ selUser: id, users: s.users.concat([{ id, name: 'New user', agent: false }]) })); };
-      X.ud = Object.assign({ name: u.name, kind: u.agent ? 'agent' : 'human',
-        setName: ev => { const v = ev.target.value; upU(x => Object.assign({}, x, { name: v })); },
-        kindPills: [['Human', false], ['Agent', true]].map(([label, ag]) => ({ label, go: () => upU(x => Object.assign({}, x, { agent: ag })), bg: u.agent === ag ? '#21262d' : 'transparent', bd: u.agent === ag ? '#3a444f' : '#29313a', fg: u.agent === ag ? '#e4e9ee' : '#8a95a1' })), adminGlyph: adm ? '☑' : '☐', adminColor: adm ? '#6cb0ff' : '#8a95a1',
+      const create = async role => { const r = await this.run('user.create', { name: role === 'agent' ? 'New agent' : 'New user', role }, 'Created.'); if (r) this.setState({ selUser: r.id, uedit: null }); };
+      X.newUser = () => create('human'); X.newAgent = () => create('agent');
+      const nm = S.uedit && S.uedit.id === u.id ? S.uedit.name : u.name;
+      X.ud = Object.assign({ name: nm, kind: u.agent ? 'agent' : 'human',
+        setName: ev => this.setState({ uedit: { id: u.id, name: ev.target.value } }),
+        commitName: () => { const e = S.uedit; if (!e || e.id !== u.id) return; this.setState({ uedit: null }); if (!e.name.trim()) return this.say('validation_failed', 'Name cannot be empty.'); if (e.name.trim() !== u.name) this.run('user.update', { user_id: u.id, name: e.name.trim() }, 'Renamed.'); },
+        kindPills: [['Human', false], ['Agent', true]].map(([label, ag]) => ({ label, go: () => { if (u.agent !== ag) this.say('invalid_request', 'A user’s type is fixed when it is created.'); }, bg: u.agent === ag ? '#21262d' : 'transparent', bd: u.agent === ag ? '#3a444f' : '#29313a', fg: u.agent === ag ? '#e4e9ee' : '#8a95a1' })),
+        adminGlyph: u.admin ? '☑' : '☐', adminColor: u.admin ? '#6cb0ff' : '#8a95a1',
         projects: P.filter(p => p.members.includes(u.id)).map(p => ({ name: p.name })),
-        toggleAdmin: () => { if (adm && Object.values(S.admins).filter(Boolean).length === 1) return this.say('forbidden', 'At least one admin is required.'); this.setState(s => ({ admins: Object.assign({}, s.admins, { [u.id]: !adm }) })); },
-        issue: async () => { const r = await this.issueToken(u.id); if (r) this.setState({ newToken: r.tok, tokUser: u.id }); } }, a);
+        toggleAdmin: () => { if (!u.id) return; if (u.admin && U.filter(x => x.admin).length === 1) return this.say('forbidden', 'At least one admin is required.'); this.run('user.update', { user_id: u.id, is_admin: !u.admin }, u.admin ? 'Admin removed.' : 'Admin granted.'); },
+        issue: async () => { if (!u.id) return; const r = await this.issueToken(u.id); if (r) this.setState({ newToken: r.tok, tokUser: u.id }); } }, a);
     }
     return X;
   }
+
+  // ---- render ------------------------------------------------------------
   renderVals() {
-    const S = this.state, U = this.state.users, P = this.state.projects;
+    const S = this.state, U = S.users.filter(u => !u.system), P = S.projects, me = S.me;
     const isInbox = S.view === 'inbox', isProjects = S.view === 'projects', isTaskView = S.view === 'tasks', isGraph = S.view === 'graph', editorViews = isTaskView || isInbox || isGraph;
-    const go = (view, filter) => () => this.setState({ view, filter: filter || 'all', panel: null });
-    const unread = S.inbox.filter(n => !n.read).length;
+    const go = (view, filter) => () => { this.setState({ view, filter: filter || 'all', panel: null }); if (['settings', 'admin', 'projects'].includes(view)) this.reload('full'); };
+    const unread = S.notes.filter(n => !n.read_at).length;
     const navItem = (label, icon, view, filter, count) => {
       const on = S.view === view && (view !== 'tasks' || S.filter === filter);
       return { label, icon, count: count || '', go: go(view, filter), bg: on ? '#21262d' : 'transparent', fw: on ? 600 : 400 };
@@ -663,44 +748,56 @@ class Component extends DCLogic {
       const waiting = t.deps.map(d => this.tk(d)).filter(d => d.status !== 'done');
       let hint = '', hintColor = '#e0a14a';
       if (e === 'blocked') hint = 'waiting on ' + waiting.map(d => d.name).join(', ');
-      else if (t.stale && e === 'active') { hint = 'stale ' + t.stale; hintColor = '#8a95a1'; }
-      return Object.assign({
+      else if (t.stale && e === 'active') { hint = 'stale'; hintColor = '#8a95a1'; }
+      return {
         name: t.name, desc: t.desc, state, dot, hint, hintColor,
         asName: u ? u.name : 'Unassigned', asColor: u ? '#e4e9ee' : '#8a95a1', avRadius: a.r, avBg: a.bg, avFg: a.fg, ini: a.ini,
         start: this.fmt(t.start), due: this.fmt(t.due), dueColor: this.overdue(t) ? '#f0837a' : '#8a95a1',
         bg: S.sel === t.id ? '#1a2027' : 'transparent', bar: S.sel === t.id ? '#6cb0ff' : 'transparent',
-        open: () => this.setState({ sel: t.id, panel: null })
-      });
+        open: () => this.pick(t.id)
+      };
     });
     const projPills = [{ id: 'all', name: 'All projects' }].concat(P).map(p => ({
       label: p.name, go: () => this.setState({ proj: p.id }),
       bg: S.proj === p.id ? '#21262d' : 'transparent', bd: S.proj === p.id ? '#3a444f' : '#29313a', fg: S.proj === p.id ? '#e4e9ee' : '#8a95a1'
     }));
-    const typeColor = { 'task.overdue': '#f0837a', 'task.stale': '#e0a14a', 'note.added': '#8a95a1', 'task.handoff': '#6cb0ff' };
-    const inboxRows = S.inbox.map(n => ({
-      type: n.type, tc: typeColor[n.type] || '#8a95a1', text: n.text, task: this.tk(n.task).name, age: n.age,
-      dot: n.read ? 'transparent' : '#6cb0ff', bg: n.read ? 'transparent' : '#131922',
-      open: () => this.setState(s => ({ inbox: s.inbox.map(x => x.id === n.id ? Object.assign({}, x, { read: true }) : x), sel: n.task, view: 'tasks', filter: 'all', proj: 'all' }))
-    }));
+    const typeColor = { 'task.overdue': '#f0837a', 'task.stale': '#e0a14a', 'note.added': '#8a95a1', 'task.handed_off': '#6cb0ff', 'task.unblocked': '#5fc48a' };
+    const look = this.look();
+    const inboxRows = S.notes.map(n => {
+      const e = n.event, actor = this.user(e.actor_id), text = GHH.eventText(e, look), task = e.task_id ? this.tk(e.task_id) : null;
+      return {
+        type: e.type, tc: typeColor[e.type] || '#8a95a1', text: actor && actor.system ? (task ? task.name + ' ' : '') + text : (actor ? actor.name : 'someone') + ' ' + text, task: task ? task.name : '', age: GHH.ago(n.created_at),
+        dot: n.read_at ? 'transparent' : '#6cb0ff', bg: n.read_at ? 'transparent' : '#131922',
+        open: () => { if (!n.read_at) this.run('notification.mark_read', { notification_id: n.id }, 'Marked read.'); if (task) { this.setState({ view: 'tasks', filter: 'all', proj: 'all' }); this.pick(task.id); } }
+      };
+    });
     const projRows = P.map(p => {
       const ts = S.tasks.filter(t => t.p === p.id), es = ts.map(t => this.eff(t));
       const c = k => es.filter(x => x === k).length, od = ts.filter(t => this.overdue(t)).length;
       return { name: p.name, desc: p.desc, active: c('active'), blocked: c('blocked'), overdue: od, done: c('done'),
         blockedColor: c('blocked') ? '#e0a14a' : '#8a95a1', overdueColor: od ? '#f0837a' : '#8a95a1',
         members: p.members.map(id => this.av(this.user(id))), bg: S.selProj === p.id ? '#1a2027' : 'transparent',
-        open: () => this.setState({ selProj: p.id }) };
+        open: () => this.setState({ selProj: p.id, pedit: null }) };
     });
     const sp = P.find(p => p.id === S.selProj);
-    const upP = fn => this.setState(s => ({ projects: s.projects.map(p => p.id === sp.id ? fn(p) : p) }));
-    const pd = { name: sp.name, desc: sp.desc, stale: sp.stale + 'h',
-      setName: ev => { const v = ev.target.value; upP(p => Object.assign({}, p, { name: v })); }, setDesc: ev => { const v = ev.target.value; upP(p => Object.assign({}, p, { desc: v })); },
-      addOptions: U.filter(u => !sp.members.includes(u.id)).map(u => ({ id: u.id, label: u.name + (u.agent ? ' (agent)' : '') })),
-      addMember: ev => { const id = ev.target.value; if (id) upP(p => Object.assign({}, p, { members: p.members.concat([id]) })); },
-      members: sp.members.map(id => { const u = this.user(id); return Object.assign({ name: u.name, kind: u.agent ? 'agent' : 'human', remove: () => { if (sp.members.length === 1) return this.say('validation_failed', 'A project needs at least one member.'); upP(p => Object.assign({}, p, { members: p.members.filter(x => x !== id) })); } }, this.av(u)); }),
-      viewTasks: () => this.setState({ view: 'tasks', filter: 'all', proj: sp.id }) };
+    const pe = sp && S.pedit && S.pedit.id === sp.id ? S.pedit : null;
+    const setPe = k => ev => { const val = ev.target.value; this.setState(s => ({ pedit: Object.assign({ id: sp.id, name: sp.name, desc: sp.desc }, s.pedit && s.pedit.id === sp.id ? s.pedit : {}, { [k]: val }) })); };
+    const pd = sp ? { name: pe ? pe.name : sp.name, desc: pe ? pe.desc : sp.desc, stale: (sp.stale == null ? S.config.stale : sp.stale) + 'h' + (sp.stale == null ? ' (default)' : ''),
+      setName: setPe('name'), setDesc: setPe('desc'),
+      commit: () => {
+        if (!pe) return; this.setState({ pedit: null });
+        if (!pe.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
+        const a = { project_id: sp.id }; if (pe.name.trim() !== sp.name) a.name = pe.name.trim(); if (pe.desc !== sp.desc) a.description = pe.desc;
+        if (Object.keys(a).length > 1) this.run('project.update', a, 'Saved.');
+      },
+      addOptions: U.filter(u => !sp.members.includes(u.id)).map(u => ({ id: u.id, label: this.label(u) })),
+      addMember: ev => { const id = ev.target.value; if (id) this.run('project.add_member', { project_id: sp.id, user_id: id }, 'Member added.'); },
+      members: sp.members.map(id => { const u = this.user(id); return Object.assign({ name: u ? u.name : id, kind: u && u.agent ? 'agent' : 'human', remove: () => { if (sp.members.length === 1) return this.say('validation_failed', 'A project needs at least one member.'); this.run('project.remove_member', { project_id: sp.id, user_id: id }, 'Member removed.'); } }, this.av(u)); }),
+      viewTasks: () => this.setState({ view: 'tasks', filter: 'all', proj: sp.id }) }
+      : { name: '', desc: '', stale: '', setName: () => {}, setDesc: () => {}, commit: () => {}, addOptions: [], addMember: () => {}, members: [], viewTasks: () => {} };
 
-    const t = this.tk(S.sel);
-    let ed = null, depOptions = [];
+    const t = S.tasks.find(x => x.id === S.sel);
+    let ed = null, depOptions = [], handOptions = [], assignOptions = [{ id: '', label: 'Unassigned' }], hto = '';
     if (t) {
       const e = this.eff(t), [state, dot] = this.stateInfo(e);
       const setF = k => ev => this.edit(t, k, ev.target.value);
@@ -711,76 +808,88 @@ class Component extends DCLogic {
       const actions = [];
       const start = () => {
         if (e === 'blocked') return this.say('blocked', 'Waiting on ' + t.deps.map(d => this.tk(d)).filter(d => d.status !== 'done').map(d => d.name).join(', ') + '.');
-        this.upd(t.id, x => Object.assign({}, x, { status: 'active', as: x.as || 'caleb' }), 'started');
+        this.act(t, 'task.start', null, 'Started.');
       };
-      if (t.status === 'planned') { actions.push(act('Start', start, e === 'blocked' ? '' : 'primary', e === 'blocked' ? 0.5 : 1)); actions.push(act('Hand off', () => this.setState({ panel: 'handoff' }))); actions.push(act('Cancel task', () => this.upd(t.id, x => Object.assign({}, x, { status: 'canceled' }), 'canceled'), 'danger')); }
+      if (t.status === 'planned') { actions.push(act('Start', start, e === 'blocked' ? '' : 'primary', e === 'blocked' ? 0.5 : 1)); actions.push(act('Cancel task', () => this.act(t, 'task.cancel', null, 'Canceled.'), 'danger')); }
       if (t.status === 'active') {
         actions.push(act('Finish', () => this.setState({ panel: 'finish' }), e === 'blocked' ? '' : 'primary'));
         actions.push(act('Hand off', () => this.setState({ panel: 'handoff' })));
-        actions.push(act('Unclaim', () => this.upd(t.id, x => Object.assign({}, x, { status: 'planned', as: '' }), 'unclaimed')));
-        actions.push(act('Cancel task', () => this.upd(t.id, x => Object.assign({}, x, { status: 'canceled' }), 'canceled'), 'danger'));
+        actions.push(act('Unclaim', () => this.act(t, 'task.unclaim', null, 'Unclaimed.')));
+        actions.push(act('Cancel task', () => this.act(t, 'task.cancel', null, 'Canceled.'), 'danger'));
       }
-      if (t.status === 'done' || t.status === 'canceled') actions.push(act('Reopen', () => this.upd(t.id, x => Object.assign({}, x, { status: 'planned' }), 'reopened')));
-      const evCol = w => { const u = U.find(u => u.name === w); return u ? this.av(u) : { ini: 'S', r: '5px', bg: '#151a20', fg: '#8a95a1' }; };
+      if (t.status === 'done' || t.status === 'canceled') actions.push(act('Reopen', () => this.act(t, 'task.reopen', null, 'Reopened.')));
+      actions.push(act('Delete', () => { if (window.confirm('Delete “' + t.name + '”?')) this.act(t, 'task.delete', null, 'Deleted.'); }, 'danger'));
+      const evCol = id => { const u = this.user(id); return u ? this.av(u) : { ini: 'S', r: '5px', bg: '#151a20', fg: '#8a95a1' }; };
       const deps = fd.deps.map(id => { const d = this.tk(id), [s, c] = this.stateInfo(this.eff(d));
-        return { name: d.name, state: s, dot: c, open: () => this.setState({ sel: id }), remove: () => this.edit(t, 'deps', fd.deps.filter(y => y !== id)) }; });
-      const dependents = fd.gates.map(id => ({ name: this.tk(id).name, open: () => this.setState({ sel: id }), remove: () => this.edit(t, 'gates', fd.gates.filter(y => y !== id)) }));
+        return { name: d.name, state: s, dot: c, open: () => this.pick(id), remove: () => this.edit(t, 'deps', fd.deps.filter(y => y !== id)) }; });
+      const dependents = fd.gates.map(id => ({ name: this.tk(id).name, open: () => this.pick(id), remove: () => this.edit(t, 'gates', fd.gates.filter(y => y !== id)) }));
       depOptions = S.tasks.filter(x => x.id !== t.id && !fd.deps.includes(x.id)).map(x => ({ id: x.id, label: x.name }));
-      ed = { id: t.id, vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, outcome: t.outcome, actions,
+      const mem = this.members(t.p);
+      handOptions = mem.filter(u => !u.system && u.id !== t.as).map(u => ({ id: u.id, label: this.label(u) }));
+      hto = handOptions.some(o => o.id === S.handTo) ? S.handTo : (handOptions[0] ? handOptions[0].id : '');
+      assignOptions = assignOptions.concat(mem.filter(u => !u.system).map(u => ({ id: u.id, label: this.label(u) })));
+      const events = (S.evs[t.id] || []).slice().reverse().map(x => { const w = this.user(x.actor_id), c = evCol(x.actor_id); return Object.assign({ who: w ? w.name : 'unknown', text: GHH.eventText(x, look), age: GHH.ago(x.time), tc: w && w.system ? '#e0a14a' : '#c4ccd4' }, c); });
+      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, outcome: t.outcome, actions,
         dirtyLabel: dirty ? 'Unsaved changes' : 'All changes saved', dirtyColor: dirty ? '#e0a14a' : '#8a95a1',
         undo: () => this.undo(), redo: () => this.redo(), revert: () => this.setState({ draft: null }), save: () => this.saveDraft(),
         undoOp: dr && dr.undo.length ? 1 : 0.4, redoOp: dr && dr.redo.length ? 1 : 0.4, saveOp: dirty ? 1 : 0.4,
         setName: setF('name'), setDesc: setF('desc'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
-        setStart: ev => { const v = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { start: v }) })); }, setDue: ev => { const v = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { due: v }) })); },
+        setStart: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { start: val }) })); }, setDue: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { due: val }) })); },
         blurStart: () => this.commitRaw(t, 'start'), blurDue: () => this.commitRaw(t, 'due'),
-        assignee: t.as, setAssignee: ev => { const id = ev.target.value; this.upd(t.id, x => Object.assign({}, x, { as: id }), id ? 'assigned to ' + this.user(id).name : 'unassigned'); },
-        deps, noDeps: deps.length === 0, dependents, hasDependents: dependents.length > 0,
-        events: t.ev.slice().reverse().map(v => { const c = evCol(v.w); return Object.assign({ who: v.w, text: v.t, age: v.a, tc: v.w === 'system' ? '#e0a14a' : '#c4ccd4' }, c); }) };
+        assignee: t.as, setAssignee: ev => {
+          const id = ev.target.value;
+          if (id === t.as) return;
+          if (t.status === 'planned' && id) return this.act(t, 'task.assign', { to: id }, 'Assigned.');
+          if (t.status === 'active' && !id) return this.act(t, 'task.unclaim', null, 'Unclaimed.');
+          this.say('invalid_transition', t.status === 'planned' ? 'A planned task cannot be unassigned; assign someone else.' : t.status === 'active' ? 'Use Hand off to give an active task to someone else.' : 'Reopen the task before changing its assignee.');
+          this.forceUpdate && this.forceUpdate();
+        },
+        deps, noDeps: deps.length === 0, dependents, hasDependents: dependents.length > 0, events };
     }
     const toast = S.toast, nar = S.w < 1150;
     const X = this.extraVals(S, list);
+    const live = { live: ' · live', connecting: ' · connecting…', offline: ' · offline, retrying', off: '' }[S.bell] || '';
+    const inboxOff = S.loaded && !S.subs.some(s => s.channel === 'internal');
     return {
       ...X, toggleDone: () => this.setState(s => ({ hideDone: !s.hideDone })), hideDoneGlyph: S.hideDone ? '☑' : '☐', hideDoneColor: S.hideDone ? '#6cb0ff' : '#8a95a1',
       tblCols: nar ? 'minmax(0,1fr) 116px 96px 100px' : 'minmax(220px,1fr) 150px 110px 100px 100px', startDisp: nar ? 'none' : 'block',
       cols: nar ? '60px minmax(0,1fr) 340px' : 'minmax(180px,220px) minmax(0,1fr) minmax(340px,420px)',
       lbl: nar ? 'none' : 'block', gear: nar ? 'none' : 'grid', navJ: nar ? 'center' : 'flex-start', padX: nar ? '0' : '20px',
-      title: titles[tabKey], subtitle: isTaskView ? list.length + ' tasks' : '', q: S.q, setQ: ev => this.setState({ q: ev.target.value }),
+      meName: me ? me.name : '…', meIni: me ? this.ini(me) : '·',
+      title: titles[tabKey], subtitle: !S.loaded ? (S.loadErr ? 'not connected' : 'loading…') : isTaskView ? list.length + ' tasks' + live : live.replace(' · ', ''), q: S.q, setQ: ev => this.setState({ q: ev.target.value }),
       goBack: go('tasks'),
       navA: [navItem('Tasks', '☑', 'tasks', 'all'), navItem('Inbox', '≡', 'inbox', '', unread || ''), navItem('Projects', '▣', 'projects'), navItem('Graph', '◇', 'graph')],
-      navC: [navItem('Settings', '⚙', 'settings'), navItem('Admin', '♜', 'admin')], goSettings: go('settings'),
-      newProject: () => { const id = 'p' + (S.projects.length + 1); this.setState(s => ({ selProj: id, projects: s.projects.concat([{ id, name: 'Untitled project', desc: '', members: ['caleb'], stale: 72 }]) })); },
+      navC: [navItem('Settings', '⚙', 'settings')].concat(me && me.admin ? [navItem('Admin', '♜', 'admin')] : []), goSettings: go('settings'),
+      newProject: async () => { const r = await this.run('project.create', { name: 'Untitled project' }, 'Project created.'); if (r) this.setState({ selProj: r.id, pedit: null }); },
       navB: [navItem('Delegation', '↗', 'tasks', 'delegation'), navItem('Scheduled', '◷', 'tasks', 'scheduled'), navItem('Active', '●', 'tasks', 'active')],
-      isTaskView, isInbox, isProjects, projPills, rows, noRows: isTaskView && rows.length === 0, inboxRows, projRows, pd,
-      markAllRead: () => this.setState(s => ({ inbox: s.inbox.map(n => Object.assign({}, n, { read: true })) })),
-      newTask: () => {
-        const id = 't' + (S.tasks.length + 1), p = S.proj === 'all' ? 'p1' : S.proj;
-        this.setState(s => ({ sel: id, tasks: s.tasks.concat([{ id, p, name: 'Untitled task', desc: '', status: 'planned', as: '', by: '', start: '', due: '', deps: [], outcome: '', v: 1, ev: [{ w: 'Caleb', t: 'created this task', a: 'just now' }] }]) }));
+      isTaskView, isInbox, isProjects, projPills, rows, noRows: isTaskView && rows.length === 0, inboxRows, projRows, pd, inboxOff,
+      enableInbox: () => this.run('subscription.create', { channel: 'internal', types: Component.INBOX_TYPES, only_mine: true }, 'Inbox turned on for tasks assigned to you.'),
+      markAllRead: async () => { for (const n of S.notes.filter(x => !x.read_at)) { try { await GHH.mutate('notification.mark_read', { notification_id: n.id }); } catch (e) { this.fail(e); break; } } this.after('hot'); },
+      newTask: async () => {
+        const p = S.proj === 'all' ? P[0] : P.find(x => x.id === S.proj);
+        if (!p) return this.say('validation_failed', 'Create a project first.');
+        const r = await this.run('task.create', { project_id: p.id, name: 'Untitled task' }, 'Task created.'); if (r) this.pick(r.id);
       },
       showTaskEditor: editorViews && !!t, emptyEditor: editorViews && !t, ed,
       panelFinish: S.panel === 'finish', panelHandoff: S.panel === 'handoff', closePanel: () => this.setState({ panel: null }),
       outcome: S.outcome, setOutcome: ev => this.setState({ outcome: ev.target.value }),
-      confirmFinish: () => {
+      confirmFinish: async () => {
         if (!S.outcome.trim()) return this.say('validation_failed', 'task.finish requires an outcome.');
-        const o = S.outcome.trim();
-        this.upd(t.id, x => Object.assign({}, x, { status: 'done', outcome: o }), 'finished: ' + o);
-        this.setState({ panel: null, outcome: '' });
+        if (await this.act(t, 'task.finish', { outcome: S.outcome.trim() }, 'Finished.')) this.setState({ panel: null, outcome: '' });
       },
-      handTo: S.handTo, setHandTo: ev => this.setState({ handTo: ev.target.value }), handNote: S.handNote, setHandNote: ev => this.setState({ handNote: ev.target.value }),
-      handOptions: U.filter(u => !t || u.id !== t.as).map(u => ({ id: u.id, label: u.name + (u.agent ? ' (agent)' : '') })),
-      confirmHandoff: () => {
-        const to = this.user(S.handTo), n = S.handNote.trim();
-        this.upd(t.id, x => Object.assign({}, x, { as: to.id, by: 'caleb' }), 'handed off to ' + to.name + (n ? ': "' + n + '"' : ''));
-        this.setState({ panel: null, handNote: '' });
+      handTo: hto, setHandTo: ev => this.setState({ handTo: ev.target.value }), handNote: S.handNote, setHandNote: ev => this.setState({ handNote: ev.target.value }), handOptions,
+      confirmHandoff: async () => {
+        if (!hto) return this.say('validation_failed', 'Pick who to hand off to.');
+        if (await this.act(t, 'task.handoff', { to: hto, reason: S.handNote.trim() }, 'Handed off.')) this.setState({ panel: null, handNote: '' });
       },
-      assignOptions: [{ id: '', label: 'Unassigned' }].concat(U.map(u => ({ id: u.id, label: u.name + (u.agent ? ' (agent)' : '') }))),
-      depOptions,
+      assignOptions, depOptions,
       addDep: ev => {
         const id = ev.target.value; if (!id) return;
         if (this.reaches(id, t.id)) return this.say('dependency_cycle', 'Adding ' + this.tk(id).name + ' would create a cycle.');
         { const cur = S.draft && S.draft.id === t.id ? S.draft.f.deps : t.deps; this.edit(t, 'deps', cur.concat([id])); }
       },
       draft: S.noteDraft, setDraft: ev => this.setState({ noteDraft: ev.target.value }),
-      addNote: () => { const d = S.noteDraft.trim(); if (!d) return; this.upd(t.id, x => x, 'added a note: ' + d); this.setState({ noteDraft: '' }); },
+      addNote: async () => { const d = S.noteDraft.trim(); if (!d) return; if (await this.run('task.add_note', { task_id: t.id, text: d }, 'Note added.')) this.setState({ noteDraft: '' }); },
       toast: !!toast, toastCode: toast ? toast.code : '', toastMsg: toast ? toast.msg : '', toastColor: toast && toast.ok ? '#5fc48a' : '#f0837a'
     };
   }

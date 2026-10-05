@@ -2,7 +2,7 @@
 
 ## Unreleased — Finishing tasks
 
-- A finished task shows its outcome as an editable field, saved with the other edits (Save/⌘S, undo/redo). It cannot be emptied. Needs GHH with outcome on `task.update`.
+- Every task shows an editable OUTCOME card, saved with the other edits (Save/⌘S, undo/redo): a draft before finishing, a correction after. Finish starts from the draft. A finished task's outcome cannot be emptied. Needs GHH `fc6cd46` or later.
 - The outcome field is multi-line, and the shown outcome keeps its line breaks.
 - Planned tasks offer Finish as well as Start; finishing one starts it first (GHH finishes only active tasks), so an unassigned task becomes yours.
 

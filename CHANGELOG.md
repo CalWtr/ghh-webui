@@ -2,8 +2,8 @@
 
 ## Unreleased — Finishing tasks
 
-- Every task shows an editable OUTCOME card, saved with the other edits (Save/⌘S, undo/redo): a draft before finishing, a correction after. Finish starts from the draft. A finished task's outcome cannot be emptied. Needs GHH `fc6cd46` or later.
-- The outcome field is multi-line, and the shown outcome keeps its line breaks.
+- The outcome is the finish result: a read-only OUTCOME card shows on finished tasks only, and the task editor never sends `outcome`. Set it in the Finish panel (multi-line, starts empty); to change it, Reopen (which clears it) and finish again. Needs GHH with `0003_outcome_finished_only`; expected results go in the description.
+- The shown outcome keeps its line breaks.
 - Planned tasks offer Finish as well as Start; finishing one starts it first (GHH finishes only active tasks), so an unassigned task becomes yours.
 
 ## Unreleased — Meta editing

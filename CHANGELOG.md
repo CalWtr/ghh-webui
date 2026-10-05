@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — Finishing tasks
+
+- The outcome field is multi-line, and the shown outcome keeps its line breaks.
+- Planned tasks offer Finish as well as Start; finishing one starts it first (GHH finishes only active tasks), so an unassigned task becomes yours.
+
 ## Unreleased — Meta editing
 
 - Show and edit `meta` on tasks (task editor, saved with Save/⌘S and covered by undo/redo) and on projects (saved on blur). The text layout is `key: value`, or `key:` followed by `  - item` lines for a list.

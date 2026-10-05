@@ -241,7 +241,11 @@ input[type=datetime-local]{color-scheme:dark}
       <textarea value="{{ ed.desc }}" onChange="{{ ed.setDesc }}" style="width:100%;min-height:84px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta</label>
       <textarea value="{{ ed.meta }}" onChange="{{ ed.setMeta }}" placeholder="key: value&#10;list:&#10;  - item" spellcheck="false" style="width:100%;min-height:56px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></textarea>
-      <sc-if value="{{ ed.outcome }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ ed.outcomeEditable }}" hint-placeholder-val="{{ false }}">
+        <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Outcome</label>
+        <textarea value="{{ ed.outcomeDraft }}" onChange="{{ ed.setOutcome }}" style="width:100%;min-height:84px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      </sc-if>
+      <sc-if value="{{ ed.outcomeShown }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:14px;padding:10px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-size:13px"><span style="font:500 11px 'IBM Plex Mono',monospace;color:#8a95a1;letter-spacing:.06em">OUTCOME</span><div style="margin-top:4px;white-space:pre-wrap">{{ ed.outcome }}</div></div>
       </sc-if>
     </section>
@@ -437,7 +441,7 @@ input[type=datetime-local]{color-scheme:dark}
 class Component extends DCLogic {
   static EVENTS = ['task.created', 'task.updated', 'task.scheduled', 'task.state_changed', 'task.assigned', 'task.handed_off', 'task.deleted', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'dependency.added', 'dependency.removed', 'note.added', 'project.created', 'project.updated', 'project.archived', 'project.deleted', 'project.member_added', 'project.member_removed'];
   static INBOX_TYPES = ['task.assigned', 'task.handed_off', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'note.added'];
-  static FIELDS = ['name', 'desc', 'meta', 'start', 'due', 'deps', 'gates'];
+  static FIELDS = ['name', 'desc', 'meta', 'outcome', 'start', 'due', 'deps', 'gates'];
   static ls(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   static lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -580,7 +584,7 @@ class Component extends DCLogic {
   }
   same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   gatesOf(id) { return this.state.tasks.filter(x => x.deps.includes(id)).map(x => x.id); }
-  base(t) { return { name: t.name, desc: t.desc, meta: GHH.metaText(t.meta), start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
+  base(t) { return { name: t.name, desc: t.desc, meta: GHH.metaText(t.meta), outcome: t.outcome, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
   edit(t, k, val) {
     this.setState(s => {
       const cur = s.draft && s.draft.id === t.id ? s.draft : { id: t.id, f: this.base(t), undo: [], redo: [] };
@@ -597,11 +601,13 @@ class Component extends DCLogic {
     if (!ch.length) return this.setState({ draft: null });
     if (!F.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
     if (F.start && F.due && F.due < F.start) return this.say('validation_failed', 'Due must not be before start.');
+    if (ch.includes('outcome') && t.status === 'done' && !F.outcome.trim()) return this.say('validation_failed', 'Outcome cannot be empty.');
     const pm = ch.includes('meta') ? GHH.parseMeta(F.meta) : null;
     if (pm && pm.error) return this.say('validation_failed', pm.error);
     const u = {};
     if (ch.includes('name')) u.name = F.name.trim();
     if (ch.includes('desc')) u.description = F.desc;
+    if (ch.includes('outcome') && t.status === 'done') u.outcome = F.outcome.trim();
     if (pm) { const patch = GHH.metaPatch(t.meta, pm.meta); if (Object.keys(patch).length) u.meta = patch; }
     if (ch.includes('start') || ch.includes('due')) u.scheduling = { start: GHH.toMs(F.start), due: GHH.toMs(F.due) };
     try {
@@ -844,11 +850,11 @@ class Component extends DCLogic {
       hto = handOptions.some(o => o.id === S.handTo) ? S.handTo : (handOptions[0] ? handOptions[0].id : '');
       assignOptions = assignOptions.concat(mem.filter(u => !u.system).map(u => ({ id: u.id, label: this.label(u) })));
       const events = (S.evs[t.id] || []).slice().reverse().map(x => { const w = this.user(x.actor_id), c = evCol(x.actor_id); return Object.assign({ who: w ? w.name : 'unknown', text: GHH.eventText(x, look), age: GHH.ago(x.time), tc: w && w.system ? '#e0a14a' : '#c4ccd4' }, c); });
-      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, meta: fd.meta, outcome: t.outcome, actions,
+      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, meta: fd.meta, outcome: t.outcome, outcomeEditable: t.status === 'done', outcomeShown: t.status !== 'done' && !!t.outcome, outcomeDraft: fd.outcome, actions,
         dirtyLabel: dirty ? 'Unsaved changes' : 'All changes saved', dirtyColor: dirty ? '#e0a14a' : '#8a95a1',
         undo: () => this.undo(), redo: () => this.redo(), revert: () => this.setState({ draft: null }), save: () => this.saveDraft(),
         undoOp: dr && dr.undo.length ? 1 : 0.4, redoOp: dr && dr.redo.length ? 1 : 0.4, saveOp: dirty ? 1 : 0.4,
-        setName: setF('name'), setDesc: setF('desc'), setMeta: setF('meta'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
+        setName: setF('name'), setDesc: setF('desc'), setMeta: setF('meta'), setOutcome: setF('outcome'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
         setStart: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { start: val }) })); }, setDue: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { due: val }) })); },
         blurStart: () => this.commitRaw(t, 'start'), blurDue: () => this.commitRaw(t, 'due'),
         assignee: t.as, setAssignee: ev => {

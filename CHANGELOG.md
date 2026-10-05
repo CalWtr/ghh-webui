@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Task fields
+
+- Admin → Task fields edits the instance preset fields (key, level, kind, description, default); a project's Task fields section edits its own, lists the instance fields it inherits, and can Override one (change it, or set it to off). Saves send only the changed definitions. Needs GHH with `0004_fields`.
+- The task editor shows each field that applies as its own labeled input (lists one item per line) with its level and description; unset required fields are highlighted. "Other meta" holds the remaining keys, and a field key typed there is refused. Both save as one meta patch.
+- Under the Start/Finish buttons, a hint names the unset fields each needs. Finish (including Start-then-Finish on a planned task) is checked before anything is sent, so a planned task is not left started when finishing would be refused.
+- History names field definitions a project update set or removed.
+
 ## Unreleased — Finishing tasks
 
 - The outcome is the finish result: a read-only OUTCOME card shows on finished tasks only, and the task editor never sends `outcome`. Set it in the Finish panel (multi-line, starts empty); to change it, Reopen (which clears it) and finish again. Needs GHH with `0003_outcome_finished_only`; expected results go in the description.

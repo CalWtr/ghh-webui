@@ -62,12 +62,36 @@
     for (const k of Object.keys(from || {})) if (!(k in to)) patch[k] = null;
     return patch;
   }
-  // "updated name, description; set plans; removed type" from an *.updated event's after.
+  // "updated name, description; set plans; removed type; defined field expected" from an *.updated event's after.
   function fieldChanges(after, prefix, label) {
-    const a = after || {}, m = a.meta || {};
-    const fields = Object.keys(a).filter((k) => k !== 'meta').map(label);
-    const set = Object.keys(m).filter((k) => m[k] !== null), gone = Object.keys(m).filter((k) => m[k] === null);
-    return [fields.length ? prefix + fields.join(', ') : '', set.length ? 'set ' + set.join(', ') : '', gone.length ? 'removed ' + gone.join(', ') : ''].filter(Boolean).join('; ');
+    const a = after || {}, m = a.meta || {}, f = a.fields || {};
+    const fields = Object.keys(a).filter((k) => k !== 'meta' && k !== 'fields').map(label);
+    const keys = (o, gone) => Object.keys(o).filter((k) => (o[k] === null) === gone);
+    const set = keys(m, false), gone = keys(m, true), def = keys(f, false), undef = keys(f, true);
+    return [fields.length ? prefix + fields.join(', ') : '', set.length ? 'set ' + set.join(', ') : '', gone.length ? 'removed ' + gone.join(', ') : '',
+      def.length ? 'defined field ' + def.join(', ') : '', undef.length ? 'removed field ' + undef.join(', ') : ''].filter(Boolean).join('; ');
+  }
+
+  // Preset fields: meta keys every task carries. Instance fields (config) first,
+  // then the project's, which replace instance fields of the same key; `off`
+  // drops one. GHH enforces start/finish fields; the UI shows them.
+  function declaredFields(cfgFields, projFields) {
+    const byKey = new Map();
+    for (const [key, d] of Object.entries(cfgFields || {})) byKey.set(key, Object.assign({ key, source: 'instance' }, d));
+    for (const [key, d] of Object.entries(projFields || {})) byKey.set(key, Object.assign({ key, source: 'project' }, d));
+    return [...byKey.values()];
+  }
+  const effectiveFields = (cfgFields, projFields) => declaredFields(cfgFields, projFields).filter((f) => f.level !== 'off');
+  const fieldSet = (f, meta) => { const v = (meta || {})[f.key]; return v !== undefined && (f.kind === 'list' ? Array.isArray(v) : typeof v === 'string'); };
+  // What blocks a transition: start needs start fields, finish also finish fields.
+  const missingFields = (fields, meta, op) => fields.filter((f) => (op === 'start' ? f.level === 'start' : f.level === 'start' || f.level === 'finish') && !fieldSet(f, meta));
+  // A definition as GHH stores it, without empty optional parts, for comparing and sending.
+  const fieldDef = (d) => Object.assign({ level: d.level, kind: d.kind }, d.description ? { description: d.description } : {}, d.default != null ? { default: d.default } : {});
+  function fieldsPatch(from, to) {
+    const patch = {};
+    for (const [k, d] of Object.entries(to)) if (!from || !from[k] || JSON.stringify(fieldDef(from[k])) !== JSON.stringify(fieldDef(d))) patch[k] = fieldDef(d);
+    for (const k of Object.keys(from || {})) if (!(k in to)) patch[k] = null;
+    return patch;
   }
   const dayLocal = (ms) => isoLocal(ms).slice(0, 10);
 
@@ -135,7 +159,7 @@
     deps: [], outcome: t.outcome || '', v: t.version, stale: !!t.stale, blocked: !!t.blocked, parent: t.parent_id, updatedAt: t.updated_at, ev: []
   });
   const adaptProject = (p, members) => ({
-    id: p.id, name: p.name, desc: p.description || '', meta: p.meta || {}, stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
+    id: p.id, name: p.name, desc: p.description || '', meta: p.meta || {}, fields: p.fields || {}, stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
   });
 
   // Every call costs ~0.4s on the server and they run one at a time, so the
@@ -149,12 +173,12 @@
     const members = await Promise.all(projects.map((p) => call('query.members', { project_id: p.id })));
     return {
       me: adaptUser(me), users: users.map(adaptUser), projects: projects.map((p, i) => adaptProject(p, members[i].members)),
-      subs: subs.items, config: { stale: cfg.stale_after_hours, dueSoon: cfg.due_soon_hours }
+      subs: subs.items, config: { stale: cfg.stale_after_hours, dueSoon: cfg.due_soon_hours, fields: cfg.fields || {} }
     };
   }
 
   // Identity of the project list, so a hot load can tell that cold data is stale.
-  const projectKey = (ps) => JSON.stringify(ps.map((p) => [p.id, p.name, p.desc, p.stale]).sort());
+  const projectKey = (ps) => JSON.stringify(ps.map((p) => [p.id, p.name, p.desc, p.stale, p.meta, p.fields]).sort());
 
   async function loadHot(projectIds, withNotes) {
     const own = new Set(projectIds);
@@ -175,7 +199,7 @@
       const [a, b] = k.split('>'), t = byId.get(a);
       if (t) t.deps.push(b);
     }
-    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse(), projectKey: projectKey(projects.map((p) => ({ id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours }))) };
+    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse(), projectKey: projectKey(projects.map((p) => ({ id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours, meta: p.meta || {}, fields: p.fields || {} }))) };
   }
 
   async function snapshot() {
@@ -240,5 +264,5 @@
   const newSecret = () => hex(crypto.getRandomValues(new Uint8Array(32)));
   const sha256hex = async (text) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
-  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl, metaText, parseMeta, metaPatch };
+  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl, metaText, parseMeta, metaPatch, META_KEY, declaredFields, effectiveFields, fieldSet, missingFields, fieldDef, fieldsPatch };
 })();

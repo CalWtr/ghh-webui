@@ -26,6 +26,49 @@
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   };
   const toMs = (iso) => (iso ? new Date(iso).getTime() : null);
+
+  // Meta as editable text: "key: value", or "key:" followed by "  - item" lines
+  // for a list. The same layout the MCP briefing prints.
+  const META_KEY = /^[a-z][a-z0-9._-]{0,63}$/;
+  const metaText = (meta) => Object.entries(meta || {}).map(([k, v]) => (Array.isArray(v) ? k + ':\n' + v.map((i) => '  - ' + i).join('\n') : k + ': ' + v)).join('\n');
+  // Returns { meta } or { error } naming the line.
+  function parseMeta(text) {
+    const meta = {};
+    let list = null;
+    const lines = String(text || '').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      const item = line.match(/^\s+-\s*(.*)$/);
+      if (item) {
+        if (!list) return { error: 'Line ' + (i + 1) + ': a "- item" needs a "key:" line above it.' };
+        if (item[1].trim()) meta[list].push(item[1].trim());
+        continue;
+      }
+      const kv = line.match(/^([^\s:][^:]*):(.*)$/);
+      if (!kv) return { error: 'Line ' + (i + 1) + ': expected "key: value", "key:" or "  - item".' };
+      const key = kv[1].trim(), value = kv[2].trim();
+      if (!META_KEY.test(key)) return { error: 'Line ' + (i + 1) + ': "' + key + '" is not a valid key (lowercase letters, digits, . _ -, starting with a letter).' };
+      if (key in meta) return { error: 'Line ' + (i + 1) + ': "' + key + '" appears twice.' };
+      if (value) { meta[key] = value; list = null; } else { meta[key] = []; list = key; }
+    }
+    for (const [k, v] of Object.entries(meta)) if (Array.isArray(v) && !v.length) return { error: '"' + k + '" has no value and no items.' };
+    return { meta };
+  }
+  // The patch from one meta to another: changed and new keys, null for removed ones.
+  function metaPatch(from, to) {
+    const patch = {};
+    for (const [k, v] of Object.entries(to)) if (JSON.stringify(v) !== JSON.stringify((from || {})[k])) patch[k] = v;
+    for (const k of Object.keys(from || {})) if (!(k in to)) patch[k] = null;
+    return patch;
+  }
+  // "updated name, description; set plans; removed type" from an *.updated event's after.
+  function fieldChanges(after, prefix, label) {
+    const a = after || {}, m = a.meta || {};
+    const fields = Object.keys(a).filter((k) => k !== 'meta').map(label);
+    const set = Object.keys(m).filter((k) => m[k] !== null), gone = Object.keys(m).filter((k) => m[k] === null);
+    return [fields.length ? prefix + fields.join(', ') : '', set.length ? 'set ' + set.join(', ') : '', gone.length ? 'removed ' + gone.join(', ') : ''].filter(Boolean).join('; ');
+  }
   const dayLocal = (ms) => isoLocal(ms).slice(0, 10);
 
   function ago(ms, now) {
@@ -86,13 +129,13 @@
 
   const adaptUser = (u) => ({ id: u.id, name: u.name, desc: u.description || '', agent: u.role === 'agent', system: u.role === 'system', role: u.role, admin: !!u.is_admin });
   const adaptTask = (t) => ({
-    id: t.id, p: t.project_id, name: t.name, desc: t.description || '',
+    id: t.id, p: t.project_id, name: t.name, desc: t.description || '', meta: t.meta || {},
     status: t.state === 'finished' ? 'done' : t.state, as: t.assignee_id || '', by: t.created_by,
     start: isoLocal(t.scheduling.start), due: isoLocal(t.scheduling.due), startMs: t.scheduling.start, dueMs: t.scheduling.due,
     deps: [], outcome: t.outcome || '', v: t.version, stale: !!t.stale, blocked: !!t.blocked, parent: t.parent_id, updatedAt: t.updated_at, ev: []
   });
   const adaptProject = (p, members) => ({
-    id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
+    id: p.id, name: p.name, desc: p.description || '', meta: p.meta || {}, stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
   });
 
   // Every call costs ~0.4s on the server and they run one at a time, so the
@@ -146,7 +189,7 @@
     const date = (ms) => (ms == null ? 'none' : isoLocal(ms).replace('T', ' '));
     switch (e.type) {
       case 'task.created': return 'created this task';
-      case 'task.updated': return 'updated ' + Object.keys(d.after || {}).map((k) => (k === 'description' ? 'description' : k === 'parent_id' ? 'parent' : k)).join(', ');
+      case 'task.updated': return fieldChanges(d.after, 'updated ', (k) => (k === 'parent_id' ? 'parent' : k)) || 'updated this task';
       case 'task.scheduled': return 'rescheduled: start ' + date(d.after.start) + ', due ' + date(d.after.due);
       case 'task.state_changed':
         if (d.to === 'active') return 'started';
@@ -164,7 +207,7 @@
       case 'dependency.removed': return 'removed prerequisite ' + t(d.depends_on);
       case 'note.added': return 'added a note: ' + d.text;
       case 'project.created': return 'created project ' + (d.project && d.project.name);
-      case 'project.updated': return 'updated the project';
+      case 'project.updated': return fieldChanges(d.after, 'updated the project ', (k) => k.replace(/_/g, ' ')) || 'updated the project';
       case 'project.archived': return 'archived the project';
       case 'project.deleted': return 'deleted the project';
       case 'project.member_added': return 'added ' + u(d.user) + ' to the project';
@@ -197,5 +240,5 @@
   const newSecret = () => hex(crypto.getRandomValues(new Uint8Array(32)));
   const sha256hex = async (text) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
-  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl };
+  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl, metaText, parseMeta, metaPatch };
 })();

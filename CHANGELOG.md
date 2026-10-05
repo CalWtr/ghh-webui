@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Meta editing
+
+- Show and edit `meta` on tasks (task editor, saved with Save/⌘S and covered by undo/redo) and on projects (saved on blur). The text layout is `key: value`, or `key:` followed by `  - item` lines for a list.
+- Saves send only a `meta` patch for the changed keys (`null` removes a key), so editing other fields never touches meta. A malformed line is reported and nothing is sent; the project editor keeps the typed text.
+- History names the meta keys an update set or removed.
+- Requires a GHH with the `0002_meta` migration.
+
 ## 2026-09-29 — Caleb's dedicated GHH runtime
 
 - Deploy the web UI from `CalWtr/ghh-webui` at `/home/caleb/services/ghh-webui`, served on port 8081 by a NixOS-defined service.

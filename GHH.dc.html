@@ -239,6 +239,8 @@ input[type=datetime-local]{color-scheme:dark}
       <input value="{{ ed.name }}" onChange="{{ ed.setName }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
       <textarea value="{{ ed.desc }}" onChange="{{ ed.setDesc }}" style="width:100%;min-height:84px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta</label>
+      <textarea value="{{ ed.meta }}" onChange="{{ ed.setMeta }}" placeholder="key: value&#10;list:&#10;  - item" spellcheck="false" style="width:100%;min-height:56px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></textarea>
       <sc-if value="{{ ed.outcome }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:14px;padding:10px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-size:13px"><span style="font:500 11px 'IBM Plex Mono',monospace;color:#8a95a1;letter-spacing:.06em">OUTCOME</span><div style="margin-top:4px">{{ ed.outcome }}</div></div>
       </sc-if>
@@ -340,6 +342,8 @@ input[type=datetime-local]{color-scheme:dark}
       <input value="{{ pd.name }}" onChange="{{ pd.setName }}" onBlur="{{ pd.commit }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
       <textarea value="{{ pd.desc }}" onChange="{{ pd.setDesc }}" onBlur="{{ pd.commit }}" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta</label>
+      <textarea value="{{ pd.meta }}" onChange="{{ pd.setMeta }}" onBlur="{{ pd.commit }}" placeholder="repository:&#10;  - https://…&#10;preset.bugfix:&#10;  - repro" spellcheck="false" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></textarea>
       <div onClick="{{ pd.viewTasks }}" style="margin-top:14px;display:inline-block;padding:6px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">View tasks</div>
     </section>
     <section style="padding:20px;border-bottom:1px solid #29313a">
@@ -433,7 +437,7 @@ input[type=datetime-local]{color-scheme:dark}
 class Component extends DCLogic {
   static EVENTS = ['task.created', 'task.updated', 'task.scheduled', 'task.state_changed', 'task.assigned', 'task.handed_off', 'task.deleted', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'dependency.added', 'dependency.removed', 'note.added', 'project.created', 'project.updated', 'project.archived', 'project.deleted', 'project.member_added', 'project.member_removed'];
   static INBOX_TYPES = ['task.assigned', 'task.handed_off', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'note.added'];
-  static FIELDS = ['name', 'desc', 'start', 'due', 'deps', 'gates'];
+  static FIELDS = ['name', 'desc', 'meta', 'start', 'due', 'deps', 'gates'];
   static ls(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   static lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -530,7 +534,7 @@ class Component extends DCLogic {
 
   // ---- lookups ----------------------------------------------------------
   user(id) { return this.state.users.find(u => u.id === id); }
-  tk(id) { return this.state.tasks.find(t => t.id === id) || this.state.ghosts[id] || { id, p: '', name: '(not visible)', desc: '', status: 'planned', as: '', by: '', start: '', due: '', deps: [], outcome: '', v: 0, blocked: false, stale: false }; }
+  tk(id) { return this.state.tasks.find(t => t.id === id) || this.state.ghosts[id] || { id, p: '', name: '(not visible)', desc: '', meta: {}, status: 'planned', as: '', by: '', start: '', due: '', deps: [], outcome: '', v: 0, blocked: false, stale: false }; }
   look() { return { user: id => this.user(id), task: id => this.tk(id) }; }
   eff(t) { return (t.status === 'planned' || t.status === 'active') && t.blocked ? 'blocked' : t.status; }
   fmt(iso) { return iso ? iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4) : '—'; }
@@ -576,7 +580,7 @@ class Component extends DCLogic {
   }
   same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   gatesOf(id) { return this.state.tasks.filter(x => x.deps.includes(id)).map(x => x.id); }
-  base(t) { return { name: t.name, desc: t.desc, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
+  base(t) { return { name: t.name, desc: t.desc, meta: GHH.metaText(t.meta), start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
   edit(t, k, val) {
     this.setState(s => {
       const cur = s.draft && s.draft.id === t.id ? s.draft : { id: t.id, f: this.base(t), undo: [], redo: [] };
@@ -593,9 +597,12 @@ class Component extends DCLogic {
     if (!ch.length) return this.setState({ draft: null });
     if (!F.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
     if (F.start && F.due && F.due < F.start) return this.say('validation_failed', 'Due must not be before start.');
+    const pm = ch.includes('meta') ? GHH.parseMeta(F.meta) : null;
+    if (pm && pm.error) return this.say('validation_failed', pm.error);
     const u = {};
     if (ch.includes('name')) u.name = F.name.trim();
     if (ch.includes('desc')) u.description = F.desc;
+    if (pm) { const patch = GHH.metaPatch(t.meta, pm.meta); if (Object.keys(patch).length) u.meta = patch; }
     if (ch.includes('start') || ch.includes('due')) u.scheduling = { start: GHH.toMs(F.start), due: GHH.toMs(F.due) };
     try {
       if (Object.keys(u).length) this.patchTask(await GHH.mutate('task.update', Object.assign({ task_id: t.id, if_match: t.v }, u)));
@@ -783,20 +790,25 @@ class Component extends DCLogic {
     });
     const sp = P.find(p => p.id === S.selProj);
     const pe = sp && S.pedit && S.pedit.id === sp.id ? S.pedit : null;
-    const setPe = k => ev => { const val = ev.target.value; this.setState(s => ({ pedit: Object.assign({ id: sp.id, name: sp.name, desc: sp.desc }, s.pedit && s.pedit.id === sp.id ? s.pedit : {}, { [k]: val }) })); };
-    const pd = sp ? { name: pe ? pe.name : sp.name, desc: pe ? pe.desc : sp.desc, stale: (sp.stale == null ? S.config.stale : sp.stale) + 'h' + (sp.stale == null ? ' (default)' : ''),
-      setName: setPe('name'), setDesc: setPe('desc'),
+    const setPe = k => ev => { const val = ev.target.value; this.setState(s => ({ pedit: Object.assign({ id: sp.id, name: sp.name, desc: sp.desc, meta: GHH.metaText(sp.meta) }, s.pedit && s.pedit.id === sp.id ? s.pedit : {}, { [k]: val }) })); };
+    const pd = sp ? { name: pe ? pe.name : sp.name, desc: pe ? pe.desc : sp.desc, meta: pe ? pe.meta : GHH.metaText(sp.meta), stale: (sp.stale == null ? S.config.stale : sp.stale) + 'h' + (sp.stale == null ? ' (default)' : ''),
+      setName: setPe('name'), setDesc: setPe('desc'), setMeta: setPe('meta'),
       commit: () => {
-        if (!pe) return; this.setState({ pedit: null });
+        if (!pe) return;
+        // A meta typo keeps the draft open so the text is not lost.
+        const pm = pe.meta !== GHH.metaText(sp.meta) ? GHH.parseMeta(pe.meta) : null;
+        if (pm && pm.error) return this.say('validation_failed', pm.error);
+        this.setState({ pedit: null });
         if (!pe.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
         const a = { project_id: sp.id }; if (pe.name.trim() !== sp.name) a.name = pe.name.trim(); if (pe.desc !== sp.desc) a.description = pe.desc;
+        if (pm) { const patch = GHH.metaPatch(sp.meta, pm.meta); if (Object.keys(patch).length) a.meta = patch; }
         if (Object.keys(a).length > 1) this.run('project.update', a, 'Saved.');
       },
       addOptions: U.filter(u => !sp.members.includes(u.id)).map(u => ({ id: u.id, label: this.label(u) })),
       addMember: ev => { const id = ev.target.value; if (id) this.run('project.add_member', { project_id: sp.id, user_id: id }, 'Member added.'); },
       members: sp.members.map(id => { const u = this.user(id); return Object.assign({ name: u ? u.name : id, kind: u && u.agent ? 'agent' : 'human', remove: () => { if (sp.members.length === 1) return this.say('validation_failed', 'A project needs at least one member.'); this.run('project.remove_member', { project_id: sp.id, user_id: id }, 'Member removed.'); } }, this.av(u)); }),
       viewTasks: () => this.setState({ view: 'tasks', filter: 'all', proj: sp.id }) }
-      : { name: '', desc: '', stale: '', setName: () => {}, setDesc: () => {}, commit: () => {}, addOptions: [], addMember: () => {}, members: [], viewTasks: () => {} };
+      : { name: '', desc: '', meta: '', stale: '', setName: () => {}, setDesc: () => {}, setMeta: () => {}, commit: () => {}, addOptions: [], addMember: () => {}, members: [], viewTasks: () => {} };
 
     const t = S.tasks.find(x => x.id === S.sel);
     let ed = null, depOptions = [], handOptions = [], assignOptions = [{ id: '', label: 'Unassigned' }], hto = '';
@@ -831,11 +843,11 @@ class Component extends DCLogic {
       hto = handOptions.some(o => o.id === S.handTo) ? S.handTo : (handOptions[0] ? handOptions[0].id : '');
       assignOptions = assignOptions.concat(mem.filter(u => !u.system).map(u => ({ id: u.id, label: this.label(u) })));
       const events = (S.evs[t.id] || []).slice().reverse().map(x => { const w = this.user(x.actor_id), c = evCol(x.actor_id); return Object.assign({ who: w ? w.name : 'unknown', text: GHH.eventText(x, look), age: GHH.ago(x.time), tc: w && w.system ? '#e0a14a' : '#c4ccd4' }, c); });
-      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, outcome: t.outcome, actions,
+      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, meta: fd.meta, outcome: t.outcome, actions,
         dirtyLabel: dirty ? 'Unsaved changes' : 'All changes saved', dirtyColor: dirty ? '#e0a14a' : '#8a95a1',
         undo: () => this.undo(), redo: () => this.redo(), revert: () => this.setState({ draft: null }), save: () => this.saveDraft(),
         undoOp: dr && dr.undo.length ? 1 : 0.4, redoOp: dr && dr.redo.length ? 1 : 0.4, saveOp: dirty ? 1 : 0.4,
-        setName: setF('name'), setDesc: setF('desc'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
+        setName: setF('name'), setDesc: setF('desc'), setMeta: setF('meta'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
         setStart: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { start: val }) })); }, setDue: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { due: val }) })); },
         blurStart: () => this.commitRaw(t, 'start'), blurDue: () => this.commitRaw(t, 'due'),
         assignee: t.as, setAssignee: ev => {

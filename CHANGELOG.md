@@ -3,7 +3,7 @@
 ## Unreleased — One meta editor
 
 - Meta is edited as entry rows everywhere — key, rule (none / recommended / required to start / required to finish), kind, description, value (lists one per line) — each marked with its source (config, project, task). Replaces the meta text boxes and the Task fields editors. Needs GHH with `0005_meta_entries`.
-- Admin → Config meta edits config entries. A project's Meta section shows config entries read-only with Switch off / Switch on, and edits its own entries (Save / Revert). The task editor shows config and project entries read-only (Fill on an empty slot adds a task row for it) and edits the task's own entries with the other task edits (Save, undo/redo).
+- Admin → Config meta edits config entries. A project's Meta section shows config entries read-only with Switch off / Switch on, and edits its own entries (Save / Revert). The task editor shows config and project entries read-only, except that an empty slot has its own value box (the value is stored as the task's entry of that key, which is not repeated as a task row), and edits the task's own entries with the other task edits (Save, undo/redo).
 - A finished task shows config and project entries as of finishing.
 - The Start/Finish hint and the finish pre-check follow the rules from all three levels.
 

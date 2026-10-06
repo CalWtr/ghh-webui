@@ -275,7 +275,12 @@ input[type=datetime-local]{color-scheme:dark}
               <span onClick="{{ f.act }}" style="font-size:12px;color:#6cb0ff;cursor:pointer">{{ f.actLabel }}</span>
             </div>
             <div style="font-size:12px;color:#8a95a1">{{ f.desc }}</div>
-            <div style="font-size:13px;white-space:pre-wrap;color:{{ f.valueColor }}">{{ f.value }}</div>
+            <sc-if value="{{ f.plain }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:13px;white-space:pre-wrap;color:{{ f.valueColor }}">{{ f.value }}</div>
+            </sc-if>
+            <sc-if value="{{ f.fillable }}" hint-placeholder-val="{{ false }}">
+              <textarea value="{{ f.fillValue }}" onChange="{{ f.setFill }}" placeholder="{{ f.fillHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+            </sc-if>
           </div>
         </sc-for>
         <sc-for list="{{ ed.me.rows }}" as="r" hint-placeholder-count="0">
@@ -683,7 +688,13 @@ class Component extends DCLogic {
     return { config: GHH.configFor(this.state.config.meta, pm), project: noOff(pm), frozen: false };
   }
   rulesOf(t, meta) { const c = this.contextOf(t); return GHH.metaRules(c.config, c.project, meta || t.meta); }
-  base(t) { return { name: t.name, desc: t.desc, mrows: GHH.metaRows(t.meta), start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
+  // Keys of the config and project slots (rules without a value) a task fills in.
+  slotKeys(t) { const c = this.contextOf(t); return new Set([c.config, c.project].flatMap(m => Object.entries(m).filter(([, e]) => e.level && e.level !== 'off' && e.value === undefined).map(([k]) => k))); }
+  // Task rows; a row holding only a value for a slot is a fill, edited in the slot's row.
+  base(t) {
+    const slots = this.slotKeys(t), mrows = GHH.metaRows(t.meta).map(r => slots.has(r.key) && !r.level && !r.desc && !r.kindSet ? Object.assign(r, { fill: true }) : r);
+    return { name: t.name, desc: t.desc, mrows, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) };
+  }
   // "Start needs …" / "Finish needs …" from the saved meta, for open tasks.
   gateText(t) {
     if (t.status !== 'planned' && t.status !== 'active') return '';
@@ -696,7 +707,7 @@ class Component extends DCLogic {
   rowEditor(rows, change, src) {
     const set = (i, k) => ev => { const v = ev.target.value; change(n => { n[i][k] = v; if (k === 'kind') n[i].kindSet = true; }); };
     return {
-      rows: rows.map((r, i) => ({ key: r.key, level: r.level, kind: r.kind, desc: r.desc, value: r.value, src, srcColor: Component.SRC[src],
+      rows: rows.map((r, i) => ({ r, i })).filter(({ r }) => !r.fill).map(({ r, i }) => ({ key: r.key, level: r.level, kind: r.kind, desc: r.desc, value: r.value, src, srcColor: Component.SRC[src],
         valueHint: r.kind === 'list' ? 'Value: one item per line' : 'Value', setKey: set(i, 'key'), setLevel: set(i, 'level'), setKind: set(i, 'kind'), setDesc: set(i, 'desc'), setValue: set(i, 'value'),
         remove: () => change(n => { n.splice(i, 1); }) })),
       add: () => change(n => { n.push({ key: '', level: '', kind: 'string', kindSet: false, desc: '', value: '' }); })
@@ -722,7 +733,7 @@ class Component extends DCLogic {
   readRow(src, key, e, extra) {
     const v = e.value === undefined ? '' : Array.isArray(e.value) ? e.value.map(x => '• ' + x).join('\n') : e.value;
     const rule = e.level === 'start' ? 'required to start' : e.level === 'finish' ? 'required to finish' : e.level || '';
-    return Object.assign({ src, srcColor: Component.SRC[src], key, rule, ruleColor: '#8a95a1', desc: e.description || '', value: v, valueColor: '#e4e9ee', border: '#29313a', op: 1, act: () => {}, actLabel: '' }, extra || {});
+    return Object.assign({ src, srcColor: Component.SRC[src], key, rule, ruleColor: '#8a95a1', desc: e.description || '', value: v, valueColor: '#e4e9ee', border: '#29313a', op: 1, act: () => {}, actLabel: '', fillable: false, plain: true }, extra || {});
   }
   static SRC = { config: '#8f9bff', project: '#5fc48a', task: '#6cb0ff' };
   edit(t, k, val) {
@@ -1002,21 +1013,26 @@ class Component extends DCLogic {
       const events = (S.evs[t.id] || []).slice().reverse().map(x => { const w = this.user(x.actor_id), c = evCol(x.actor_id); return Object.assign({ who: w ? w.name : 'unknown', text: GHH.eventText(x, look), age: GHH.ago(x.time), tc: w && w.system ? '#e0a14a' : '#c4ccd4' }, c); });
       ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, outcome: t.outcome, hasOutcome: t.status === 'done' && !!t.outcome, actions,
         me: (() => {
-          const c = this.contextOf(t), draftKeys = new Set(fd.mrows.map(r => r.key.trim()));
+          const c = this.contextOf(t), change = fn => { const next = fd.mrows.map(r => Object.assign({}, r)); fn(next); this.edit(t, 'mrows', next); };
           const live = GHH.rowsMeta(fd.mrows), rules = this.rulesOf(t, live.error ? t.meta : live.meta);
           const inherited = [['config', c.config], ['project', c.project]].flatMap(([src, meta]) => Object.entries(meta).map(([k, e]) => {
             const slot = !!e.level && e.level !== 'off' && e.value === undefined, rule = rules.find(r => r.source === src && r.key === k);
             const unmet = slot && rule && !rule.met && e.level !== 'recommended';
             const extra = { ruleColor: unmet ? '#e0a14a' : '#8a95a1', border: unmet ? '#5a4526' : '#29313a' };
             if (c.frozen) extra.src = src + ' · as of finish';
+            // A slot is filled in its own row: the value lives on the task's entry of that key.
             if (slot) {
-              extra.value = rule && rule.met ? 'Filled on this task.' : 'Each task fills this in.';
-              extra.valueColor = '#8a95a1';
-              if (!draftKeys.has(k) && !c.frozen) Object.assign(extra, { actLabel: 'Fill', act: () => this.edit(t, 'mrows', fd.mrows.concat([{ key: k, level: '', kind: rule ? rule.kind : 'string', kindSet: false, desc: '', value: '' }])) });
+              const own = fd.mrows.find(r => r.key.trim() === k);
+              Object.assign(extra, { fillable: true, plain: false, fillValue: own ? own.value : '', fillHint: e.kind === 'list' ? 'Fill in for this task: one item per line' : 'Fill in for this task',
+                setFill: ev => { const v = ev.target.value; change(n => {
+                  const i = n.findIndex(r => r.key.trim() === k);
+                  if (i < 0) { if (v.trim()) n.push({ key: k, level: '', kind: e.kind, kindSet: false, desc: '', value: v, fill: true }); }
+                  else if (n[i].fill && !v.trim()) n.splice(i, 1);
+                  else Object.assign(n[i], n[i].fill ? { value: v, kind: e.kind } : { value: v });
+                }); } });
             }
             return this.readRow(src, k, e, extra);
           }));
-          const change = fn => { const next = fd.mrows.map(r => Object.assign({}, r)); fn(next); this.edit(t, 'mrows', next); };
           return Object.assign(this.rowEditor(fd.mrows, change, 'task'), { inherited });
         })(),
         metaNote: this.contextOf(t).frozen ? '(config and project as of finish)' : '', gate: this.gateText(t), hasGate: !!this.gateText(t),

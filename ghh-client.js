@@ -27,71 +27,69 @@
   };
   const toMs = (iso) => (iso ? new Date(iso).getTime() : null);
 
-  // Meta as editable text: "key: value", or "key:" followed by "  - item" lines
-  // for a list. The same layout the MCP briefing prints.
+  // Meta: keyed entries on config, projects and tasks. An entry holds a value
+  // (a string or a list), a rule (level, kind, description), or both. The three
+  // levels are separate lists; a project entry at level off switches a config
+  // entry off for its tasks. GHH enforces the rules; the UI explains them.
   const META_KEY = /^[a-z][a-z0-9._-]{0,63}$/;
-  const metaText = (meta) => Object.entries(meta || {}).map(([k, v]) => (Array.isArray(v) ? k + ':\n' + v.map((i) => '  - ' + i).join('\n') : k + ': ' + v)).join('\n');
-  // Returns { meta } or { error } naming the line.
-  function parseMeta(text) {
+  const PARTS = ['value', 'level', 'kind', 'description'];
+  const kindOf = (v) => (Array.isArray(v) ? 'list' : 'string');
+  // An editor row: value as text (lists one item per line). kindSet remembers
+  // whether the entry names its kind, so an untouched entry saves unchanged.
+  const entryRow = (key, e) => ({ key, level: e.level || '', kind: e.kind || (e.value !== undefined ? kindOf(e.value) : 'string'), kindSet: e.kind !== undefined,
+    desc: e.description || '', value: e.value === undefined ? '' : Array.isArray(e.value) ? e.value.join('\n') : e.value });
+  const metaRows = (meta) => Object.entries(meta || {}).map(([k, e]) => entryRow(k, e));
+  // Rows back to meta: { meta } or { error } naming the row. Blank rows are dropped.
+  function rowsMeta(rows) {
     const meta = {};
-    let list = null;
-    const lines = String(text || '').split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line.trim()) continue;
-      const item = line.match(/^\s+-\s*(.*)$/);
-      if (item) {
-        if (!list) return { error: 'Line ' + (i + 1) + ': a "- item" needs a "key:" line above it.' };
-        if (item[1].trim()) meta[list].push(item[1].trim());
-        continue;
-      }
-      const kv = line.match(/^([^\s:][^:]*):(.*)$/);
-      if (!kv) return { error: 'Line ' + (i + 1) + ': expected "key: value", "key:" or "  - item".' };
-      const key = kv[1].trim(), value = kv[2].trim();
-      if (!META_KEY.test(key)) return { error: 'Line ' + (i + 1) + ': "' + key + '" is not a valid key (lowercase letters, digits, . _ -, starting with a letter).' };
-      if (key in meta) return { error: 'Line ' + (i + 1) + ': "' + key + '" appears twice.' };
-      if (value) { meta[key] = value; list = null; } else { meta[key] = []; list = key; }
+    for (const r of rows) {
+      const key = r.key.trim(), items = r.value.split('\n').map((x) => x.trim()).filter(Boolean);
+      const value = r.kind === 'list' ? (items.length ? items : undefined) : (r.value.trim() || undefined);
+      if (!key && value === undefined && !r.level && !r.desc.trim()) continue;
+      if (!META_KEY.test(key)) return { error: key ? '"' + key + '" is not a valid key (lowercase letters, digits, . _ -, starting with a letter).' : 'An entry needs a key.' };
+      if (key in meta) return { error: '"' + key + '" appears twice.' };
+      const e = {};
+      if (value !== undefined) e.value = value;
+      if (r.level) e.level = r.level;
+      if (r.kindSet || (r.level && value === undefined)) e.kind = r.kind;
+      if (r.desc.trim()) e.description = r.desc.trim();
+      if (!Object.keys(e).length) return { error: '"' + key + '" has nothing set: give it a value or a rule.' };
+      meta[key] = e;
     }
-    for (const [k, v] of Object.entries(meta)) if (Array.isArray(v) && !v.length) return { error: '"' + k + '" has no value and no items.' };
     return { meta };
   }
-  // The patch from one meta to another: changed and new keys, null for removed ones.
+  // The patch from one meta to another, part by part: changed parts set, dropped parts null, removed keys null.
   function metaPatch(from, to) {
     const patch = {};
-    for (const [k, v] of Object.entries(to)) if (JSON.stringify(v) !== JSON.stringify((from || {})[k])) patch[k] = v;
+    for (const [k, e] of Object.entries(to)) {
+      const old = (from || {})[k] || {}, p = {};
+      for (const part of PARTS) if (JSON.stringify(e[part]) !== JSON.stringify(old[part])) p[part] = e[part] === undefined ? null : e[part];
+      if (Object.keys(p).length) patch[k] = p;
+    }
     for (const k of Object.keys(from || {})) if (!(k in to)) patch[k] = null;
     return patch;
   }
-  // "updated name, description; set plans; removed type; defined field expected" from an *.updated event's after.
+  // The config entries that apply to a project's tasks: those it has not switched off.
+  const configFor = (config, project) => Object.fromEntries(Object.entries(config || {}).filter(([k]) => !((project || {})[k] && project[k].level === 'off')));
+  // Every rule on a task with its source and whether it is met (config already filtered).
+  function metaRules(config, project, task) {
+    const out = [];
+    for (const [source, meta] of [['config', config], ['project', project], ['task', task]]) {
+      for (const [key, e] of Object.entries(meta || {})) {
+        if (!e.level || e.level === 'off') continue;
+        const kind = e.kind || (e.value !== undefined ? kindOf(e.value) : 'string'), own = ((task || {})[key] || {}).value;
+        out.push({ key, level: e.level, kind, description: e.description || '', source, met: e.value !== undefined || (own !== undefined && kindOf(own) === kind) });
+      }
+    }
+    return out;
+  }
+  const unmetFor = (rules, op) => rules.filter((r) => (op === 'start' ? r.level === 'start' : r.level === 'start' || r.level === 'finish') && !r.met);
+  // "updated name, description; set plans; removed type" from an *.updated event's after.
   function fieldChanges(after, prefix, label) {
-    const a = after || {}, m = a.meta || {}, f = a.fields || {};
-    const fields = Object.keys(a).filter((k) => k !== 'meta' && k !== 'fields').map(label);
-    const keys = (o, gone) => Object.keys(o).filter((k) => (o[k] === null) === gone);
-    const set = keys(m, false), gone = keys(m, true), def = keys(f, false), undef = keys(f, true);
-    return [fields.length ? prefix + fields.join(', ') : '', set.length ? 'set ' + set.join(', ') : '', gone.length ? 'removed ' + gone.join(', ') : '',
-      def.length ? 'defined field ' + def.join(', ') : '', undef.length ? 'removed field ' + undef.join(', ') : ''].filter(Boolean).join('; ');
-  }
-
-  // Preset fields: meta keys every task carries. Instance fields (config) first,
-  // then the project's, which replace instance fields of the same key; `off`
-  // drops one. GHH enforces start/finish fields; the UI shows them.
-  function declaredFields(cfgFields, projFields) {
-    const byKey = new Map();
-    for (const [key, d] of Object.entries(cfgFields || {})) byKey.set(key, Object.assign({ key, source: 'instance' }, d));
-    for (const [key, d] of Object.entries(projFields || {})) byKey.set(key, Object.assign({ key, source: 'project' }, d));
-    return [...byKey.values()];
-  }
-  const effectiveFields = (cfgFields, projFields) => declaredFields(cfgFields, projFields).filter((f) => f.level !== 'off');
-  const fieldSet = (f, meta) => { const v = (meta || {})[f.key]; return v !== undefined && (f.kind === 'list' ? Array.isArray(v) : typeof v === 'string'); };
-  // What blocks a transition: start needs start fields, finish also finish fields.
-  const missingFields = (fields, meta, op) => fields.filter((f) => (op === 'start' ? f.level === 'start' : f.level === 'start' || f.level === 'finish') && !fieldSet(f, meta));
-  // A definition as GHH stores it, without empty optional parts, for comparing and sending.
-  const fieldDef = (d) => Object.assign({ level: d.level, kind: d.kind }, d.description ? { description: d.description } : {}, d.default != null ? { default: d.default } : {});
-  function fieldsPatch(from, to) {
-    const patch = {};
-    for (const [k, d] of Object.entries(to)) if (!from || !from[k] || JSON.stringify(fieldDef(from[k])) !== JSON.stringify(fieldDef(d))) patch[k] = fieldDef(d);
-    for (const k of Object.keys(from || {})) if (!(k in to)) patch[k] = null;
-    return patch;
+    const a = after || {}, m = a.meta || {};
+    const fields = Object.keys(a).filter((k) => k !== 'meta').map(label);
+    const set = Object.keys(m).filter((k) => m[k] !== null), gone = Object.keys(m).filter((k) => m[k] === null);
+    return [fields.length ? prefix + fields.join(', ') : '', set.length ? 'set ' + set.join(', ') : '', gone.length ? 'removed ' + gone.join(', ') : ''].filter(Boolean).join('; ');
   }
   const dayLocal = (ms) => isoLocal(ms).slice(0, 10);
 
@@ -153,13 +151,13 @@
 
   const adaptUser = (u) => ({ id: u.id, name: u.name, desc: u.description || '', agent: u.role === 'agent', system: u.role === 'system', role: u.role, admin: !!u.is_admin });
   const adaptTask = (t) => ({
-    id: t.id, p: t.project_id, name: t.name, desc: t.description || '', meta: t.meta || {},
+    id: t.id, p: t.project_id, name: t.name, desc: t.description || '', meta: t.meta || {}, inherited: t.inherited || null,
     status: t.state === 'finished' ? 'done' : t.state, as: t.assignee_id || '', by: t.created_by,
     start: isoLocal(t.scheduling.start), due: isoLocal(t.scheduling.due), startMs: t.scheduling.start, dueMs: t.scheduling.due,
     deps: [], outcome: t.outcome || '', v: t.version, stale: !!t.stale, blocked: !!t.blocked, parent: t.parent_id, updatedAt: t.updated_at, ev: []
   });
   const adaptProject = (p, members) => ({
-    id: p.id, name: p.name, desc: p.description || '', meta: p.meta || {}, fields: p.fields || {}, stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
+    id: p.id, name: p.name, desc: p.description || '', meta: p.meta || {}, stale: p.stale_after_hours, members: members.map((m) => m.user_id), roles: members
   });
 
   // Every call costs ~0.4s on the server and they run one at a time, so the
@@ -173,12 +171,12 @@
     const members = await Promise.all(projects.map((p) => call('query.members', { project_id: p.id })));
     return {
       me: adaptUser(me), users: users.map(adaptUser), projects: projects.map((p, i) => adaptProject(p, members[i].members)),
-      subs: subs.items, config: { stale: cfg.stale_after_hours, dueSoon: cfg.due_soon_hours, fields: cfg.fields || {} }
+      subs: subs.items, config: { stale: cfg.stale_after_hours, dueSoon: cfg.due_soon_hours, meta: cfg.meta || {} }
     };
   }
 
   // Identity of the project list, so a hot load can tell that cold data is stale.
-  const projectKey = (ps) => JSON.stringify(ps.map((p) => [p.id, p.name, p.desc, p.stale, p.meta, p.fields]).sort());
+  const projectKey = (ps) => JSON.stringify(ps.map((p) => [p.id, p.name, p.desc, p.stale, p.meta]).sort());
 
   async function loadHot(projectIds, withNotes) {
     const own = new Set(projectIds);
@@ -199,7 +197,7 @@
       const [a, b] = k.split('>'), t = byId.get(a);
       if (t) t.deps.push(b);
     }
-    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse(), projectKey: projectKey(projects.map((p) => ({ id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours, meta: p.meta || {}, fields: p.fields || {} }))) };
+    return { tasks: Array.from(byId.values()), ghosts, notes: notes.slice().reverse(), projectKey: projectKey(projects.map((p) => ({ id: p.id, name: p.name, desc: p.description || '', stale: p.stale_after_hours, meta: p.meta || {} }))) };
   }
 
   async function snapshot() {
@@ -264,5 +262,5 @@
   const newSecret = () => hex(crypto.getRandomValues(new Uint8Array(32)));
   const sha256hex = async (text) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
-  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl, metaText, parseMeta, metaPatch, META_KEY, declaredFields, effectiveFields, fieldSet, missingFields, fieldDef, fieldsPatch };
+  window.GHH = { projectKey, conf, call, mutate, all, adaptUser, adaptProject, snapshot, loadCold, loadHot, eventText, connectBell, uuidv7, GHHError, isoLocal, toMs, dayLocal, ago, newToken, newSecret, sha256hex, adaptTask, httpUrl, bellUrl, META_KEY, metaRows, rowsMeta, metaPatch, configFor, metaRules, unmetFor };
 })();

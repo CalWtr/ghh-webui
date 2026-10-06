@@ -1,11 +1,11 @@
 # Changelog
 
-## Unreleased — Task fields
+## Unreleased — One meta editor
 
-- Admin → Task fields edits the instance preset fields (key, level, kind, description, default); a project's Task fields section edits its own, lists the instance fields it inherits, and can Override one (change it, or set it to off). Saves send only the changed definitions. Needs GHH with `0004_fields`.
-- The task editor shows each field that applies as its own labeled input (lists one item per line) with its level and description; unset required fields are highlighted. "Other meta" holds the remaining keys, and a field key typed there is refused. Both save as one meta patch.
-- Under the Start/Finish buttons, a hint names the unset fields each needs. Finish (including Start-then-Finish on a planned task) is checked before anything is sent, so a planned task is not left started when finishing would be refused.
-- History names field definitions a project update set or removed.
+- Meta is edited as entry rows everywhere — key, rule (none / recommended / required to start / required to finish), kind, description, value (lists one per line) — each marked with its source (config, project, task). Replaces the meta text boxes and the Task fields editors. Needs GHH with `0005_meta_entries`.
+- Admin → Config meta edits config entries. A project's Meta section shows config entries read-only with Switch off / Switch on, and edits its own entries (Save / Revert). The task editor shows config and project entries read-only (Fill on an empty slot adds a task row for it) and edits the task's own entries with the other task edits (Save, undo/redo).
+- A finished task shows config and project entries as of finishing.
+- The Start/Finish hint and the finish pre-check follow the rules from all three levels.
 
 ## Unreleased — Finishing tasks
 

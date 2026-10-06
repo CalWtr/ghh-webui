@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./ghh-client.js?v=4"></script>
+<script src="./ghh-client.js?v=5"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -213,31 +213,28 @@ input[type=datetime-local]{color-scheme:dark}
         <div><label style="display:block;margin-bottom:6px;font:400 12px 'IBM Plex Mono',monospace;color:#8a95a1">due_soon_hours</label><input type="number" value="{{ cfg.dueSoon }}" onChange="{{ cfg.setDue }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff"></div>
       </div>
       <span onClick="{{ cfg.save }}" style="margin-top:14px;display:inline-block;padding:5px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">Save config</span>
-      <h2 style="margin:28px 0 4px;font-size:14px;font-weight:600">Task fields</h2>
-      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Meta keys every task carries, in every project. A default is copied into new tasks. GHH refuses to start a task while a "required to start" field is unset, and to finish it while a required field is unset; "recommended" only shows as missing. Projects can override a field or switch it off.</div>
+      <h2 style="margin:28px 0 4px;font-size:14px;font-weight:600">Config meta</h2>
+      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Entries every task in every project sees. An entry with a value is shared context. A rule without a value is a slot each task fills with its own entry of that key: GHH refuses to start a task while a "required to start" slot is empty, and to finish it while a required slot is; "recommended" only shows as missing. Projects can switch a config entry off.</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <sc-for list="{{ ife.rows }}" as="r" hint-placeholder-count="2">
+        <sc-for list="{{ ime.rows }}" as="r" hint-placeholder-count="0">
           <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #29313a;border-radius:6px;background:#151a20">
             <div style="display:flex;gap:6px;align-items:center">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:{{ r.srcColor }};letter-spacing:.04em">{{ r.src }}</span>
               <input value="{{ r.key }}" onChange="{{ r.setKey }}" placeholder="key" spellcheck="false" style="flex:1;min-width:0;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff">
-              <select value="{{ r.level }}" onChange="{{ r.setLevel }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="recommended">recommended</option><option value="start">required to start</option><option value="finish">required to finish</option><option value="off">off</option></select>
-              <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="string">string</option><option value="list">list</option></select>
-              <span onClick="{{ r.remove }}" title="Remove field" style="color:#8a95a1;cursor:pointer;padding:0 4px" style-hover="color:#e4e9ee">×</span>
+              <span onClick="{{ r.remove }}" title="Delete entry" style="color:#8a95a1;cursor:pointer;padding:0 4px" style-hover="color:#e4e9ee">×</span>
             </div>
-            <input value="{{ r.desc }}" onChange="{{ r.setDesc }}" placeholder="What to put in it (shown next to the field)" style="width:100%;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
-            <textarea value="{{ r.dflt }}" onChange="{{ r.setDflt }}" placeholder="{{ r.dfltHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+            <div style="display:flex;gap:6px">
+              <select value="{{ r.level }}" onChange="{{ r.setLevel }}" style="flex:1;min-width:0;padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="">no rule</option><option value="recommended">recommended</option><option value="start">required to start</option><option value="finish">required to finish</option></select>
+              <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="string">string</option><option value="list">list</option></select>
+            </div>
+            <input value="{{ r.desc }}" onChange="{{ r.setDesc }}" placeholder="Description" style="width:100%;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
+            <textarea value="{{ r.value }}" onChange="{{ r.setValue }}" placeholder="{{ r.valueHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
           </div>
         </sc-for>
-        <sc-if value="{{ ife.hasInherited }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12px;color:#8a95a1">From the instance (override one to change or switch it off here):</div>
-          <sc-for list="{{ ife.inherited }}" as="f" hint-placeholder-count="1">
-            <div style="display:flex;gap:8px;align-items:baseline;font-size:12px"><span style="font-family:'IBM Plex Mono',monospace">{{ f.key }}</span><span style="color:#8a95a1">{{ f.what }}</span><span style="flex:1;min-width:0;color:#8a95a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.desc }}</span><span onClick="{{ f.override }}" style="color:#6cb0ff;cursor:pointer">Override</span></div>
-          </sc-for>
-        </sc-if>
         <div style="display:flex;gap:8px;align-items:center">
-          <span onClick="{{ ife.add }}" style="padding:4px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ Add field</span>
-          <span onClick="{{ ife.save }}" style="padding:4px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer;opacity:{{ ife.saveOp }}">Save fields</span>
-          <span onClick="{{ ife.revert }}" style="padding:4px 10px;color:#8a95a1;cursor:pointer;opacity:{{ ife.saveOp }}">Revert</span>
+          <span onClick="{{ ime.add }}" style="padding:4px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ Add entry</span>
+          <span onClick="{{ ime.save }}" style="padding:4px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer;opacity:{{ ime.saveOp }}">Save meta</span>
+          <span onClick="{{ ime.revert }}" style="padding:4px 10px;color:#8a95a1;cursor:pointer;opacity:{{ ime.saveOp }}">Revert</span>
         </div>
       </div>
     </sc-if>
@@ -266,15 +263,40 @@ input[type=datetime-local]{color-scheme:dark}
       <input value="{{ ed.name }}" onChange="{{ ed.setName }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
       <textarea value="{{ ed.desc }}" onChange="{{ ed.setDesc }}" style="width:100%;min-height:84px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
-      <sc-for list="{{ ed.fields }}" as="f" hint-placeholder-count="0">
-        <div>
-          <label style="display:flex;align-items:baseline;gap:8px;margin:16px 0 6px;font-size:13px;font-weight:600"><span style="font-family:'IBM Plex Mono',monospace">{{ f.key }}</span><span style="font:500 11px 'IBM Plex Mono',monospace;color:{{ f.badgeColor }}">{{ f.badge }}</span></label>
-          <div style="margin:-2px 0 6px;font-size:12px;color:#8a95a1">{{ f.desc }}</div>
-          <textarea value="{{ f.value }}" onChange="{{ f.set }}" placeholder="{{ f.hint }}" style="width:100%;min-height:{{ f.h }};padding:7px 10px;border:1px solid {{ f.border }};border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta <span style="font-weight:400;color:#8a95a1">{{ ed.metaNote }}</span></label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ ed.me.inherited }}" as="f" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid {{ f.border }};border-radius:6px;background:#12161b;opacity:{{ f.op }}">
+            <div style="display:flex;gap:8px;align-items:baseline">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:{{ f.srcColor }};letter-spacing:.04em">{{ f.src }}</span>
+              <span style="font:500 13px 'IBM Plex Mono',monospace">{{ f.key }}</span>
+              <span style="font:500 11px 'IBM Plex Mono',monospace;color:{{ f.ruleColor }}">{{ f.rule }}</span>
+              <span style="flex:1"></span>
+              <span onClick="{{ f.act }}" style="font-size:12px;color:#6cb0ff;cursor:pointer">{{ f.actLabel }}</span>
+            </div>
+            <div style="font-size:12px;color:#8a95a1">{{ f.desc }}</div>
+            <div style="font-size:13px;white-space:pre-wrap;color:{{ f.valueColor }}">{{ f.value }}</div>
+          </div>
+        </sc-for>
+        <sc-for list="{{ ed.me.rows }}" as="r" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #29313a;border-radius:6px;background:#151a20">
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:{{ r.srcColor }};letter-spacing:.04em">{{ r.src }}</span>
+              <input value="{{ r.key }}" onChange="{{ r.setKey }}" placeholder="key" spellcheck="false" style="flex:1;min-width:0;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff">
+              <span onClick="{{ r.remove }}" title="Delete entry" style="color:#8a95a1;cursor:pointer;padding:0 4px" style-hover="color:#e4e9ee">×</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <select value="{{ r.level }}" onChange="{{ r.setLevel }}" style="flex:1;min-width:0;padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="">no rule</option><option value="recommended">recommended</option><option value="start">required to start</option><option value="finish">required to finish</option></select>
+              <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="string">string</option><option value="list">list</option></select>
+            </div>
+            <input value="{{ r.desc }}" onChange="{{ r.setDesc }}" placeholder="Description" style="width:100%;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
+            <textarea value="{{ r.value }}" onChange="{{ r.setValue }}" placeholder="{{ r.valueHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+          </div>
+        </sc-for>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span onClick="{{ ed.me.add }}" style="padding:4px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ Add entry</span>
         </div>
-      </sc-for>
-      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">{{ ed.metaLabel }}</label>
-      <textarea value="{{ ed.meta }}" onChange="{{ ed.setMeta }}" placeholder="key: value&#10;list:&#10;  - item" spellcheck="false" style="width:100%;min-height:56px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></textarea>
+      </div>
       <sc-if value="{{ ed.hasOutcome }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:14px;padding:10px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-size:13px"><span style="font:500 11px 'IBM Plex Mono',monospace;color:#8a95a1;letter-spacing:.06em">OUTCOME</span><div style="margin-top:4px;white-space:pre-wrap">{{ ed.outcome }}</div></div>
       </sc-if>
@@ -377,36 +399,44 @@ input[type=datetime-local]{color-scheme:dark}
       <input value="{{ pd.name }}" onChange="{{ pd.setName }}" onBlur="{{ pd.commit }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
       <textarea value="{{ pd.desc }}" onChange="{{ pd.setDesc }}" onBlur="{{ pd.commit }}" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
-      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta</label>
-      <textarea value="{{ pd.meta }}" onChange="{{ pd.setMeta }}" onBlur="{{ pd.commit }}" placeholder="repository:&#10;  - https://…&#10;plans: docs/plans/" spellcheck="false" style="width:100%;min-height:72px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></textarea>
       <div onClick="{{ pd.viewTasks }}" style="margin-top:14px;display:inline-block;padding:6px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer">View tasks</div>
     </section>
     <section style="padding:20px;border-bottom:1px solid #29313a">
-      <h2 style="margin:0 0 4px;font-size:13px;font-weight:600">Task fields</h2>
-      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">Meta keys every task in this project carries. A field here replaces the instance field with the same key; "off" switches that one off.</div>
+      <h2 style="margin:0 0 4px;font-size:13px;font-weight:600">Meta</h2>
+      <div style="margin-bottom:12px;font-size:12px;color:#8a95a1;line-height:1.5">The project's own entries, which its tasks see next to the config's. Config entries are read-only here; switch one off to drop it for this project.</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <sc-for list="{{ pd.fe.rows }}" as="r" hint-placeholder-count="2">
-          <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #29313a;border-radius:6px;background:#151a20">
-            <div style="display:flex;gap:6px;align-items:center">
-              <input value="{{ r.key }}" onChange="{{ r.setKey }}" placeholder="key" spellcheck="false" style="flex:1;min-width:0;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff">
-              <select value="{{ r.level }}" onChange="{{ r.setLevel }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="recommended">recommended</option><option value="start">required to start</option><option value="finish">required to finish</option><option value="off">off</option></select>
-              <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="string">string</option><option value="list">list</option></select>
-              <span onClick="{{ r.remove }}" title="Remove field" style="color:#8a95a1;cursor:pointer;padding:0 4px" style-hover="color:#e4e9ee">×</span>
+        <sc-for list="{{ pd.me.inherited }}" as="f" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid {{ f.border }};border-radius:6px;background:#12161b;opacity:{{ f.op }}">
+            <div style="display:flex;gap:8px;align-items:baseline">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:{{ f.srcColor }};letter-spacing:.04em">{{ f.src }}</span>
+              <span style="font:500 13px 'IBM Plex Mono',monospace">{{ f.key }}</span>
+              <span style="font:500 11px 'IBM Plex Mono',monospace;color:{{ f.ruleColor }}">{{ f.rule }}</span>
+              <span style="flex:1"></span>
+              <span onClick="{{ f.act }}" style="font-size:12px;color:#6cb0ff;cursor:pointer">{{ f.actLabel }}</span>
             </div>
-            <input value="{{ r.desc }}" onChange="{{ r.setDesc }}" placeholder="What to put in it (shown next to the field)" style="width:100%;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
-            <textarea value="{{ r.dflt }}" onChange="{{ r.setDflt }}" placeholder="{{ r.dfltHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+            <div style="font-size:12px;color:#8a95a1">{{ f.desc }}</div>
+            <div style="font-size:13px;white-space:pre-wrap;color:{{ f.valueColor }}">{{ f.value }}</div>
           </div>
         </sc-for>
-        <sc-if value="{{ pd.fe.hasInherited }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12px;color:#8a95a1">From the instance (override one to change or switch it off here):</div>
-          <sc-for list="{{ pd.fe.inherited }}" as="f" hint-placeholder-count="1">
-            <div style="display:flex;gap:8px;align-items:baseline;font-size:12px"><span style="font-family:'IBM Plex Mono',monospace">{{ f.key }}</span><span style="color:#8a95a1">{{ f.what }}</span><span style="flex:1;min-width:0;color:#8a95a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.desc }}</span><span onClick="{{ f.override }}" style="color:#6cb0ff;cursor:pointer">Override</span></div>
-          </sc-for>
-        </sc-if>
+        <sc-for list="{{ pd.me.rows }}" as="r" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #29313a;border-radius:6px;background:#151a20">
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:{{ r.srcColor }};letter-spacing:.04em">{{ r.src }}</span>
+              <input value="{{ r.key }}" onChange="{{ r.setKey }}" placeholder="key" spellcheck="false" style="flex:1;min-width:0;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:13px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff">
+              <span onClick="{{ r.remove }}" title="Delete entry" style="color:#8a95a1;cursor:pointer;padding:0 4px" style-hover="color:#e4e9ee">×</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <select value="{{ r.level }}" onChange="{{ r.setLevel }}" style="flex:1;min-width:0;padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="">no rule</option><option value="recommended">recommended</option><option value="start">required to start</option><option value="finish">required to finish</option></select>
+              <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="padding:5px 6px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none"><option value="string">string</option><option value="list">list</option></select>
+            </div>
+            <input value="{{ r.desc }}" onChange="{{ r.setDesc }}" placeholder="Description" style="width:100%;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
+            <textarea value="{{ r.value }}" onChange="{{ r.setValue }}" placeholder="{{ r.valueHint }}" style="width:100%;min-height:32px;padding:5px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+          </div>
+        </sc-for>
         <div style="display:flex;gap:8px;align-items:center">
-          <span onClick="{{ pd.fe.add }}" style="padding:4px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ Add field</span>
-          <span onClick="{{ pd.fe.save }}" style="padding:4px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer;opacity:{{ pd.fe.saveOp }}">Save fields</span>
-          <span onClick="{{ pd.fe.revert }}" style="padding:4px 10px;color:#8a95a1;cursor:pointer;opacity:{{ pd.fe.saveOp }}">Revert</span>
+          <span onClick="{{ pd.me.add }}" style="padding:4px 12px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-weight:500;cursor:pointer" style-hover="background:#1a2027">+ Add entry</span>
+          <span onClick="{{ pd.me.save }}" style="padding:4px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-weight:600;cursor:pointer;opacity:{{ pd.me.saveOp }}">Save meta</span>
+          <span onClick="{{ pd.me.revert }}" style="padding:4px 10px;color:#8a95a1;cursor:pointer;opacity:{{ pd.me.saveOp }}">Revert</span>
         </div>
       </div>
     </section>
@@ -501,7 +531,7 @@ input[type=datetime-local]{color-scheme:dark}
 class Component extends DCLogic {
   static EVENTS = ['task.created', 'task.updated', 'task.scheduled', 'task.state_changed', 'task.assigned', 'task.handed_off', 'task.deleted', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'dependency.added', 'dependency.removed', 'note.added', 'project.created', 'project.updated', 'project.archived', 'project.deleted', 'project.member_added', 'project.member_removed'];
   static INBOX_TYPES = ['task.assigned', 'task.handed_off', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'note.added'];
-  static FIELDS = ['name', 'desc', 'fv', 'meta', 'start', 'due', 'deps', 'gates'];
+  static FIELDS = ['name', 'desc', 'mrows', 'start', 'due', 'deps', 'gates'];
   static ls(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   static lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -518,7 +548,7 @@ class Component extends DCLogic {
     endpoint: Component.ls('ghh.endpoint', 'localhost:2708/api/models/1b359ea6-9c5e-4867-b92a-1eb85d42dbc0/ports/api'), connToken: Component.ls('ghh.token', ''), conn: null,
     noteDraft: '', raw: {}, hideDone: false, selHook: '', selUser: '', newToken: '', tokUser: '', newSecret: '', config: { stale: 72, dueSoon: 24 }, cfgDraft: null,
     tokenLabel: '', tokens: (function () { try { const j = JSON.parse(Component.ls('ghh.tokens', 'null')); if (j) return j; } catch (e) {} return []; })(),
-    hookEdits: {}, hookNew: [], pedit: null, uedit: null, fedit: null,
+    hookEdits: {}, hookNew: [], pedit: null, uedit: null, medit: null,
     view: 'tasks', filter: 'all', q: '', sel: '', proj: 'all', selProj: '', panel: null, outcome: '', handTo: '', handNote: '', draft: null, toast: null
   };
 
@@ -644,72 +674,61 @@ class Component extends DCLogic {
   }
   same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   gatesOf(id) { return this.state.tasks.filter(x => x.deps.includes(id)).map(x => x.id); }
-  // The preset fields that apply to a task's project.
-  fieldsOf(t) { const p = this.state.projects.find(x => x.id === t.p); return GHH.effectiveFields(this.state.config.fields, p ? p.fields : {}); }
-  // Field values are edited in their own inputs (fv, lists one item per line); the meta text holds the other keys.
-  base(t) {
-    const fl = this.fieldsOf(t), keys = new Set(fl.map(f => f.key)), rest = {}, fv = {};
-    for (const [k, v] of Object.entries(t.meta || {})) if (!keys.has(k)) rest[k] = v;
-    for (const f of fl) { const v = (t.meta || {})[f.key]; fv[f.key] = v === undefined ? '' : Array.isArray(v) ? v.join('\n') : v; }
-    return { name: t.name, desc: t.desc, fv, meta: GHH.metaText(rest), start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) };
+  // The config and project entries a task sees: as of finish once finished, live otherwise.
+  // Config entries the project switched off and the project's off markers are left out.
+  contextOf(t) {
+    const noOff = m => Object.fromEntries(Object.entries(m || {}).filter(([, e]) => e.level !== 'off'));
+    if (t.inherited) return { config: t.inherited.config, project: noOff(t.inherited.project), frozen: true };
+    const p = this.state.projects.find(x => x.id === t.p), pm = p ? p.meta : {};
+    return { config: GHH.configFor(this.state.config.meta, pm), project: noOff(pm), frozen: false };
   }
-  // The task's whole meta from the draft: the meta text plus the field inputs.
-  draftMeta(t, F) {
-    const pm = GHH.parseMeta(F.meta);
-    if (pm.error) return pm;
-    const fl = this.fieldsOf(t), meta = pm.meta;
-    for (const f of fl) {
-      if (f.key in meta) return { error: '"' + f.key + '" is a task field; set it in its own input.' };
-      const raw = F.fv[f.key] || '', items = raw.split('\n').map(x => x.trim()).filter(Boolean);
-      if (f.kind === 'list' ? items.length : raw.trim()) meta[f.key] = f.kind === 'list' ? items : raw.trim();
-    }
-    return { meta };
-  }
+  rulesOf(t, meta) { const c = this.contextOf(t); return GHH.metaRules(c.config, c.project, meta || t.meta); }
+  base(t) { return { name: t.name, desc: t.desc, mrows: GHH.metaRows(t.meta), start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) }; }
   // "Start needs …" / "Finish needs …" from the saved meta, for open tasks.
   gateText(t) {
     if (t.status !== 'planned' && t.status !== 'active') return '';
-    const fl = this.fieldsOf(t), names = fs => fs.map(f => f.key).join(', ');
-    const toStart = t.status === 'planned' ? GHH.missingFields(fl, t.meta, 'start') : [];
-    const toFinish = GHH.missingFields(fl, t.meta, 'finish').filter(f => !toStart.includes(f));
+    const rules = this.rulesOf(t), names = rs => rs.map(r => r.key).join(', ');
+    const toStart = t.status === 'planned' ? GHH.unmetFor(rules, 'start') : [];
+    const toFinish = GHH.unmetFor(rules, 'finish').filter(r => !toStart.includes(r));
     return [toStart.length ? 'Start needs ' + names(toStart) + '.' : '', toFinish.length ? (toStart.length ? 'Finish also needs ' : 'Finish needs ') + names(toFinish) + '.' : ''].filter(Boolean).join(' ');
   }
-  // Rows editing preset field definitions; scope is 'instance' or a project id.
-  fieldEditor(scope, defs, inherited) {
-    const S = this.state, editing = !!S.fedit && S.fedit.scope === scope;
-    const toRow = (key, d) => ({ key, level: d.level, kind: d.kind, desc: d.description || '', dflt: d.default == null ? '' : Array.isArray(d.default) ? d.default.join('\n') : d.default });
-    const rows = editing ? S.fedit.rows : Object.entries(defs || {}).map(([k, d]) => toRow(k, d));
-    const change = fn => this.setState(s => { const next = (s.fedit && s.fedit.scope === scope ? s.fedit.rows : rows).map(r => Object.assign({}, r)); fn(next); return { fedit: { scope, rows: next } }; });
-    const set = (i, k) => ev => { const v = ev.target.value; change(n => { n[i][k] = v; }); };
-    const save = async () => {
-      if (!editing) return;
-      const to = {};
-      for (const r of rows) {
-        const key = r.key.trim();
-        if (!GHH.META_KEY.test(key)) return this.say('validation_failed', key ? '"' + key + '" is not a valid key (lowercase letters, digits, . _ -, starting with a letter).' : 'Every field needs a key.');
-        if (to[key]) return this.say('validation_failed', '"' + key + '" appears twice.');
-        if (r.level === 'off' && scope === 'instance') return this.say('validation_failed', '"' + key + '": off only applies to project fields; remove the field instead.');
-        const items = r.dflt.split('\n').map(x => x.trim()).filter(Boolean);
-        to[key] = { level: r.level, kind: r.kind, description: r.desc.trim() || null, default: r.kind === 'list' ? (items.length ? items : null) : (r.dflt.trim() || null) };
-      }
-      const patch = GHH.fieldsPatch(defs, to);
-      if (!Object.keys(patch).length) return this.setState({ fedit: null });
-      const r = scope === 'instance' ? await this.run('config.update', { fields: patch }, 'Fields saved.') : await this.run('project.update', { project_id: scope, fields: patch }, 'Fields saved.');
-      if (r) this.setState({ fedit: null });
-    };
-    const own = new Set(rows.map(r => r.key.trim()));
-    const inh = (inherited || []).filter(f => !own.has(f.key)).map(f => ({ key: f.key, what: f.level + ', ' + f.kind, desc: f.description || '', override: () => change(n => { n.push(toRow(f.key, f)); }) }));
+  // Editable entry rows. change(fn) applies fn to a copy of the rows and stores it.
+  rowEditor(rows, change, src) {
+    const set = (i, k) => ev => { const v = ev.target.value; change(n => { n[i][k] = v; if (k === 'kind') n[i].kindSet = true; }); };
     return {
-      rows: rows.map((r, i) => ({ key: r.key, level: r.level, kind: r.kind, desc: r.desc, dflt: r.dflt, dfltHint: r.kind === 'list' ? 'Default items, one per line (optional)' : 'Default value (optional)',
-        setKey: set(i, 'key'), setLevel: set(i, 'level'), setKind: set(i, 'kind'), setDesc: set(i, 'desc'), setDflt: set(i, 'dflt'), remove: () => change(n => { n.splice(i, 1); }) })),
-      inherited: inh, hasInherited: inh.length > 0,
-      add: () => change(n => { n.push({ key: '', level: 'recommended', kind: 'string', desc: '', dflt: '' }); }),
-      save, revert: () => this.setState({ fedit: null }), saveOp: editing ? 1 : 0.4
+      rows: rows.map((r, i) => ({ key: r.key, level: r.level, kind: r.kind, desc: r.desc, value: r.value, src, srcColor: Component.SRC[src],
+        valueHint: r.kind === 'list' ? 'Value: one item per line' : 'Value', setKey: set(i, 'key'), setLevel: set(i, 'level'), setKind: set(i, 'kind'), setDesc: set(i, 'desc'), setValue: set(i, 'value'),
+        remove: () => change(n => { n.splice(i, 1); }) })),
+      add: () => change(n => { n.push({ key: '', level: '', kind: 'string', kindSet: false, desc: '', value: '' }); })
     };
   }
+  // Config or project entries edited as a draft with Save / Revert; scope is 'config' or a project id.
+  metaEditor(scope, meta) {
+    const S = this.state, editing = !!S.medit && S.medit.scope === scope;
+    const rows = editing ? S.medit.rows : GHH.metaRows(meta);
+    const change = fn => this.setState(s => { const next = (s.medit && s.medit.scope === scope ? s.medit.rows : rows).map(r => Object.assign({}, r)); fn(next); return { medit: { scope, rows: next } }; });
+    const save = async () => {
+      if (!editing) return;
+      const built = GHH.rowsMeta(rows);
+      if (built.error) return this.say('validation_failed', built.error);
+      const patch = GHH.metaPatch(meta, built.meta);
+      if (!Object.keys(patch).length) return this.setState({ medit: null });
+      const r = scope === 'config' ? await this.run('config.update', { meta: patch }, 'Meta saved.') : await this.run('project.update', { project_id: scope, meta: patch }, 'Meta saved.');
+      if (r) this.setState({ medit: null });
+    };
+    return Object.assign(this.rowEditor(rows, change, scope === 'config' ? 'config' : 'project'), { save, revert: () => this.setState({ medit: null }), saveOp: editing ? 1 : 0.4 });
+  }
+  // Read-only rows for entries from another level.
+  readRow(src, key, e, extra) {
+    const v = e.value === undefined ? '' : Array.isArray(e.value) ? e.value.map(x => '• ' + x).join('\n') : e.value;
+    const rule = e.level === 'start' ? 'required to start' : e.level === 'finish' ? 'required to finish' : e.level || '';
+    return Object.assign({ src, srcColor: Component.SRC[src], key, rule, ruleColor: '#8a95a1', desc: e.description || '', value: v, valueColor: '#e4e9ee', border: '#29313a', op: 1, act: () => {}, actLabel: '' }, extra || {});
+  }
+  static SRC = { config: '#8f9bff', project: '#5fc48a', task: '#6cb0ff' };
   edit(t, k, val) {
     this.setState(s => {
       const cur = s.draft && s.draft.id === t.id ? s.draft : { id: t.id, f: this.base(t), undo: [], redo: [] };
-      const now = Date.now(), co = (typeof val === 'string' || k === 'fv') && this._lk === k && now - this._la < 900 && cur.undo.length;
+      const now = Date.now(), co = (typeof val === 'string' || k === 'mrows') && this._lk === k && now - this._la < 900 && cur.undo.length;
       this._lk = k; this._la = now;
       return { draft: { id: t.id, f: Object.assign({}, cur.f, { [k]: val }), undo: co ? cur.undo : cur.undo.concat([cur.f]).slice(-50), redo: [] } };
     });
@@ -722,7 +741,7 @@ class Component extends DCLogic {
     if (!ch.length) return this.setState({ draft: null });
     if (!F.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
     if (F.start && F.due && F.due < F.start) return this.say('validation_failed', 'Due must not be before start.');
-    const pm = ch.includes('meta') || ch.includes('fv') ? this.draftMeta(t, F) : null;
+    const pm = ch.includes('mrows') ? GHH.rowsMeta(F.mrows) : null;
     if (pm && pm.error) return this.say('validation_failed', pm.error);
     const u = {};
     if (ch.includes('name')) u.name = F.name.trim();
@@ -847,7 +866,7 @@ class Component extends DCLogic {
           if (!(cd.stale > 0) || !(cd.dueSoon > 0)) return this.say('validation_failed', 'Hours must be positive.');
           if (await this.run('config.update', { stale_after_hours: cd.stale, due_soon_hours: cd.dueSoon }, 'stale_after_hours=' + cd.stale + ', due_soon_hours=' + cd.dueSoon)) this.setState({ cfgDraft: null });
         } };
-      X.ife = this.fieldEditor('instance', S.config.fields);
+      X.ime = this.metaEditor('config', S.config.meta);
       const u = U.find(x => x.id === S.selUser) || { id: '', name: '', agent: false, admin: false }, a = this.av(u.id ? u : null);
       X.userTokenShown = !!S.newToken && S.tokUser === u.id;
       const create = async role => { const r = await this.run('user.create', { name: role === 'agent' ? 'New agent' : 'New user', role }, 'Created.'); if (r) this.setState({ selUser: r.id, uedit: null }); };
@@ -912,31 +931,39 @@ class Component extends DCLogic {
       return { name: p.name, desc: p.desc, active: c('active'), blocked: c('blocked'), overdue: od, done: c('done'),
         blockedColor: c('blocked') ? '#e0a14a' : '#8a95a1', overdueColor: od ? '#f0837a' : '#8a95a1',
         members: p.members.map(id => this.av(this.user(id))), bg: S.selProj === p.id ? '#1a2027' : 'transparent',
-        open: () => this.setState({ selProj: p.id, pedit: null, fedit: null }) };
+        open: () => this.setState({ selProj: p.id, pedit: null, medit: null }) };
     });
     const sp = P.find(p => p.id === S.selProj);
     const pe = sp && S.pedit && S.pedit.id === sp.id ? S.pedit : null;
-    const setPe = k => ev => { const val = ev.target.value; this.setState(s => ({ pedit: Object.assign({ id: sp.id, name: sp.name, desc: sp.desc, meta: GHH.metaText(sp.meta) }, s.pedit && s.pedit.id === sp.id ? s.pedit : {}, { [k]: val }) })); };
-    const pd = sp ? { name: pe ? pe.name : sp.name, desc: pe ? pe.desc : sp.desc, meta: pe ? pe.meta : GHH.metaText(sp.meta), stale: (sp.stale == null ? S.config.stale : sp.stale) + 'h' + (sp.stale == null ? ' (default)' : ''),
-      setName: setPe('name'), setDesc: setPe('desc'), setMeta: setPe('meta'),
+    const setPe = k => ev => { const val = ev.target.value; this.setState(s => ({ pedit: Object.assign({ id: sp.id, name: sp.name, desc: sp.desc }, s.pedit && s.pedit.id === sp.id ? s.pedit : {}, { [k]: val }) })); };
+    const pd = sp ? { name: pe ? pe.name : sp.name, desc: pe ? pe.desc : sp.desc, stale: (sp.stale == null ? S.config.stale : sp.stale) + 'h' + (sp.stale == null ? ' (default)' : ''),
+      setName: setPe('name'), setDesc: setPe('desc'),
       commit: () => {
         if (!pe) return;
-        // A meta typo keeps the draft open so the text is not lost.
-        const pm = pe.meta !== GHH.metaText(sp.meta) ? GHH.parseMeta(pe.meta) : null;
-        if (pm && pm.error) return this.say('validation_failed', pm.error);
         this.setState({ pedit: null });
         if (!pe.name.trim()) return this.say('validation_failed', 'Name cannot be empty.');
         const a = { project_id: sp.id }; if (pe.name.trim() !== sp.name) a.name = pe.name.trim(); if (pe.desc !== sp.desc) a.description = pe.desc;
-        if (pm) { const patch = GHH.metaPatch(sp.meta, pm.meta); if (Object.keys(patch).length) a.meta = patch; }
         if (Object.keys(a).length > 1) this.run('project.update', a, 'Saved.');
       },
       addOptions: U.filter(u => !sp.members.includes(u.id)).map(u => ({ id: u.id, label: this.label(u) })),
       addMember: ev => { const id = ev.target.value; if (id) this.run('project.add_member', { project_id: sp.id, user_id: id }, 'Member added.'); },
       members: sp.members.map(id => { const u = this.user(id); return Object.assign({ name: u ? u.name : id, kind: u && u.agent ? 'agent' : 'human', remove: () => { if (sp.members.length === 1) return this.say('validation_failed', 'A project needs at least one member.'); this.run('project.remove_member', { project_id: sp.id, user_id: id }, 'Member removed.'); } }, this.av(u)); }),
-      fe: this.fieldEditor(sp.id, sp.fields, GHH.declaredFields(S.config.fields, {})),
+      me: (() => {
+        // The project's own entries are edited; off markers show on the config rows they switch off.
+        const own = Object.fromEntries(Object.entries(sp.meta).filter(([, e]) => e.level !== 'off'));
+        const inherited = Object.entries(S.config.meta).map(([k, e]) => {
+          const off = !!sp.meta[k] && sp.meta[k].level === 'off';
+          const toggle = () => {
+            if (!off && own[k]) return this.say('validation_failed', 'The project has its own "' + k + '" entry; delete it before switching the config one off.');
+            this.run('project.update', { project_id: sp.id, meta: { [k]: off ? null : { level: 'off', value: null, kind: null, description: null } } }, off ? 'Switched on.' : 'Switched off.');
+          };
+          return this.readRow('config', k, e, { op: off ? 0.45 : 1, act: toggle, actLabel: off ? 'Switch on' : 'Switch off', rule: (off ? 'off here · ' : '') + this.readRow('config', k, e).rule });
+        });
+        return Object.assign(this.metaEditor(sp.id, own), { inherited });
+      })(),
       viewTasks: () => this.setState({ view: 'tasks', filter: 'all', proj: sp.id }) }
       : { name: '', desc: '', meta: '', stale: '', setName: () => {}, setDesc: () => {}, setMeta: () => {}, commit: () => {}, addOptions: [], addMember: () => {}, members: [], viewTasks: () => {},
-        fe: { rows: [], inherited: [], hasInherited: false, add: () => {}, save: () => {}, revert: () => {}, saveOp: 0.4 } };
+        me: { rows: [], inherited: [], add: () => {}, save: () => {}, revert: () => {}, saveOp: 0.4 } };
 
     const t = S.tasks.find(x => x.id === S.sel);
     let ed = null, depOptions = [], handOptions = [], assignOptions = [{ id: '', label: 'Unassigned' }], hto = '';
@@ -973,16 +1000,30 @@ class Component extends DCLogic {
       hto = handOptions.some(o => o.id === S.handTo) ? S.handTo : (handOptions[0] ? handOptions[0].id : '');
       assignOptions = assignOptions.concat(mem.filter(u => !u.system).map(u => ({ id: u.id, label: this.label(u) })));
       const events = (S.evs[t.id] || []).slice().reverse().map(x => { const w = this.user(x.actor_id), c = evCol(x.actor_id); return Object.assign({ who: w ? w.name : 'unknown', text: GHH.eventText(x, look), age: GHH.ago(x.time), tc: w && w.system ? '#e0a14a' : '#c4ccd4' }, c); });
-      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, meta: fd.meta, outcome: t.outcome, hasOutcome: t.status === 'done' && !!t.outcome, actions,
-        fields: this.fieldsOf(t).map(f => { const req = f.level !== 'recommended', unset = !GHH.fieldSet(f, t.meta);
-          return { key: f.key, desc: f.description || '', value: fd.fv[f.key] || '', h: f.kind === 'list' ? '56px' : '36px', hint: f.kind === 'list' ? 'One item per line' : '',
-            badge: f.level === 'start' ? 'required to start' : f.level === 'finish' ? 'required to finish' : 'recommended', badgeColor: req && unset ? '#e0a14a' : '#8a95a1', border: req && unset ? '#5a4526' : '#29313a',
-            set: ev => { const v = ev.target.value; this.edit(t, 'fv', Object.assign({}, fd.fv, { [f.key]: v })); } }; }),
-        metaLabel: this.fieldsOf(t).length ? 'Other meta' : 'Meta', gate: this.gateText(t), hasGate: !!this.gateText(t),
+      ed = { id: t.id.slice(0, 8), vLabel: 'v' + t.v + (dirty ? ' · unsaved' : ''), state, dot, name: fd.name, desc: fd.desc, outcome: t.outcome, hasOutcome: t.status === 'done' && !!t.outcome, actions,
+        me: (() => {
+          const c = this.contextOf(t), draftKeys = new Set(fd.mrows.map(r => r.key.trim()));
+          const live = GHH.rowsMeta(fd.mrows), rules = this.rulesOf(t, live.error ? t.meta : live.meta);
+          const inherited = [['config', c.config], ['project', c.project]].flatMap(([src, meta]) => Object.entries(meta).map(([k, e]) => {
+            const slot = !!e.level && e.level !== 'off' && e.value === undefined, rule = rules.find(r => r.source === src && r.key === k);
+            const unmet = slot && rule && !rule.met && e.level !== 'recommended';
+            const extra = { ruleColor: unmet ? '#e0a14a' : '#8a95a1', border: unmet ? '#5a4526' : '#29313a' };
+            if (c.frozen) extra.src = src + ' · as of finish';
+            if (slot) {
+              extra.value = rule && rule.met ? 'Filled on this task.' : 'Each task fills this in.';
+              extra.valueColor = '#8a95a1';
+              if (!draftKeys.has(k) && !c.frozen) Object.assign(extra, { actLabel: 'Fill', act: () => this.edit(t, 'mrows', fd.mrows.concat([{ key: k, level: '', kind: rule ? rule.kind : 'string', kindSet: false, desc: '', value: '' }])) });
+            }
+            return this.readRow(src, k, e, extra);
+          }));
+          const change = fn => { const next = fd.mrows.map(r => Object.assign({}, r)); fn(next); this.edit(t, 'mrows', next); };
+          return Object.assign(this.rowEditor(fd.mrows, change, 'task'), { inherited });
+        })(),
+        metaNote: this.contextOf(t).frozen ? '(config and project as of finish)' : '', gate: this.gateText(t), hasGate: !!this.gateText(t),
         dirtyLabel: dirty ? 'Unsaved changes' : 'All changes saved', dirtyColor: dirty ? '#e0a14a' : '#8a95a1',
         undo: () => this.undo(), redo: () => this.redo(), revert: () => this.setState({ draft: null }), save: () => this.saveDraft(),
         undoOp: dr && dr.undo.length ? 1 : 0.4, redoOp: dr && dr.redo.length ? 1 : 0.4, saveOp: dirty ? 1 : 0.4,
-        setName: setF('name'), setDesc: setF('desc'), setMeta: setF('meta'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
+        setName: setF('name'), setDesc: setF('desc'), start: S.raw.start != null ? S.raw.start : this.fmtFull(fd.start), due: S.raw.due != null ? S.raw.due : this.fmtFull(fd.due),
         setStart: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { start: val }) })); }, setDue: ev => { const val = ev.target.value; this.setState(s => ({ raw: Object.assign({}, s.raw, { due: val }) })); },
         blurStart: () => this.commitRaw(t, 'start'), blurDue: () => this.commitRaw(t, 'due'),
         assignee: t.as, setAssignee: ev => {
@@ -1024,8 +1065,8 @@ class Component extends DCLogic {
       outcome: S.outcome, setOutcome: ev => this.setState({ outcome: ev.target.value }),
       confirmFinish: async () => {
         if (!S.outcome.trim()) return this.say('validation_failed', 'task.finish requires an outcome.');
-        const miss = GHH.missingFields(this.fieldsOf(t), t.meta, 'finish');
-        if (miss.length) return this.say('validation_failed', 'Set ' + miss.map(f => f.key).join(', ') + ' (and save) before finishing.');
+        const miss = GHH.unmetFor(this.rulesOf(t), 'finish');
+        if (miss.length) return this.say('validation_failed', 'Set ' + miss.map(r => r.key).join(', ') + ' (and save) before finishing.');
         // GHH finishes only active tasks, so a planned one is started first.
         let cur = t;
         if (t.status === 'planned') { const r = await this.act(t, 'task.start', null, 'Started.'); if (!r) return; cur = Object.assign({}, t, { v: r.version }); }

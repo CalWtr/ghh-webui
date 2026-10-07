@@ -41,6 +41,7 @@ The UI opens `ws://<host>/api/models/<model-id>/ports/bell`. A frame carries onl
 - **User type** (human or agent) is fixed at creation.
 - **Delegation** view approximates "tasks I created that are assigned to someone else".
 - Task edits are versioned (`if_match`). A `version_conflict` triggers a reload.
+- **Subtasks**: a task's parent must be in the same project and can't be one of its own subtasks. A parent can't finish while a subtask is planned or active; cancel and delete don't check.
 
 ## Deployment
 

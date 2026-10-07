@@ -90,10 +90,13 @@ input[type=datetime-local]{color-scheme:dark}
         </div>
         <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
           <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:{{ tblCols }};align-items:center;min-height:50px;border-bottom:1px solid #29313a;cursor:pointer;background:{{ r.bg }};box-shadow:inset 2px 0 0 {{ r.bar }}" style-hover="background:#1a2027">
-            <div style="padding:7px 14px;min-width:0">
-              <div style="font-weight:600;color:#6cb0ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</div>
+            <div style="padding:7px 14px 7px {{ r.pad }}px;min-width:0;display:flex;gap:6px;align-items:flex-start">
+              <span onClick="{{ r.toggle }}" style="flex:none;width:14px;color:#8a95a1;cursor:pointer;line-height:20px" style-hover="color:#e4e9ee">{{ r.chev }}</span>
+              <div style="flex:1;min-width:0">
+              <div style="display:flex;gap:8px;align-items:baseline;min-width:0"><span style="font-weight:600;color:#6cb0ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span><span style="flex:none;font:400 11px 'IBM Plex Mono',monospace;color:#8a95a1">{{ r.subCount }}</span></div>
               <div style="margin-top:3px;font-size:12px;color:#8a95a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.desc }}</div>
               <sc-if value="{{ r.hint }}" hint-placeholder-val="{{ false }}"><div style="margin-top:4px;font:400 11px 'IBM Plex Mono',monospace;color:{{ r.hintColor }}">{{ r.hint }}</div></sc-if>
+              </div>
             </div>
             <div style="padding:0 12px;display:flex;align-items:center;gap:8px;min-width:0">
               <div style="width:24px;height:24px;flex:none;border-radius:{{ r.avRadius }};background:{{ r.avBg }};color:{{ r.avFg }};display:grid;place-items:center;font:500 10px 'IBM Plex Mono',monospace;border:1px solid #29313a">{{ r.ini }}</div>
@@ -259,10 +262,20 @@ input[type=datetime-local]{color-scheme:dark}
       <span onClick="{{ ed.save }}" style="padding:4px 14px;border-radius:6px;background:#6cb0ff;color:#0f1216;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ ed.saveOp }}">Save</span>
     </div>
     <section data-ed="1" style="padding:20px;border-bottom:1px solid #29313a">
+      <sc-if value="{{ ed.hasTrail }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;font-size:12px;color:#8a95a1">
+          <sc-for list="{{ ed.trail }}" as="a" hint-placeholder-count="1"><span><span onClick="{{ a.open }}" style="color:#6cb0ff;cursor:pointer">{{ a.name }}</span> ›</span></sc-for>
+          <span>{{ ed.name }}</span>
+        </div>
+      </sc-if>
       <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600">Name</label>
       <input value="{{ ed.name }}" onChange="{{ ed.setName }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none" style-focus="border-color:#6cb0ff">
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Description</label>
       <textarea value="{{ ed.desc }}" onChange="{{ ed.setDesc }}" style="width:100%;min-height:84px;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;resize:vertical;line-height:1.45" style-focus="border-color:#6cb0ff"></textarea>
+      <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Parent</label>
+      <select value="{{ ed.parent }}" onChange="{{ ed.setParent }}" style="width:100%;padding:7px 10px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none">
+        <sc-for list="{{ ed.parentOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+      </select>
       <label style="display:block;margin:16px 0 6px;font-size:13px;font-weight:600">Meta <span style="font-weight:400;color:#8a95a1">{{ ed.metaNote }}</span></label>
       <div style="display:flex;flex-direction:column;gap:8px">
         <sc-for list="{{ ed.me.inherited }}" as="f" hint-placeholder-count="0">
@@ -344,6 +357,19 @@ input[type=datetime-local]{color-scheme:dark}
         <div><label style="display:block;margin-bottom:6px;font-size:13px;color:#8a95a1">Start</label><input type="text" placeholder="DD-MM-YYYY HH:mm" value="{{ ed.start }}" onChange="{{ ed.setStart }}" onBlur="{{ ed.blurStart }}" style="width:100%;padding:7px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:400 12px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></div>
         <div><label style="display:block;margin-bottom:6px;font-size:13px;color:#8a95a1">Due</label><input type="text" placeholder="DD-MM-YYYY HH:mm" value="{{ ed.due }}" onChange="{{ ed.setDue }}" onBlur="{{ ed.blurDue }}" style="width:100%;padding:7px 8px;border:1px solid #29313a;border-radius:6px;background:#0f1216;outline:none;font:400 12px 'IBM Plex Mono',monospace" style-focus="border-color:#6cb0ff"></div>
       </div>
+    </section>
+
+    <section style="padding:20px;border-bottom:1px solid #29313a">
+      <h2 style="margin:0 0 12px;font-size:13px;font-weight:600">Subtasks</h2>
+      <sc-for list="{{ ed.subs }}" as="k" hint-placeholder-count="1">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:8px;border:1px solid #29313a;border-radius:6px;background:#151a20;font-size:13px">
+          <span onClick="{{ k.open }}" style="color:#6cb0ff;font-weight:500;cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ k.name }}</span>
+          <span style="flex:none;font-size:12px;color:#8a95a1">{{ k.asName }}</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#8a95a1"><span style="width:6px;height:6px;border-radius:50%;background:{{ k.dot }}"></span>{{ k.state }}</span>
+        </div>
+      </sc-for>
+      <sc-if value="{{ ed.noSubs }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#8a95a1;margin-bottom:8px">No subtasks.</div></sc-if>
+      <div onClick="{{ ed.addSub }}" style="padding:6px 10px;border:1px dashed #29313a;border-radius:6px;color:#8a95a1;cursor:pointer" style-hover="background:#1a2027">+ Add subtask</div>
     </section>
 
     <section style="padding:20px;border-bottom:1px solid #29313a">
@@ -536,7 +562,7 @@ input[type=datetime-local]{color-scheme:dark}
 class Component extends DCLogic {
   static EVENTS = ['task.created', 'task.updated', 'task.scheduled', 'task.state_changed', 'task.assigned', 'task.handed_off', 'task.deleted', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'dependency.added', 'dependency.removed', 'note.added', 'project.created', 'project.updated', 'project.archived', 'project.deleted', 'project.member_added', 'project.member_removed'];
   static INBOX_TYPES = ['task.assigned', 'task.handed_off', 'task.unblocked', 'task.due_soon', 'task.overdue', 'task.stale', 'note.added'];
-  static FIELDS = ['name', 'desc', 'mrows', 'start', 'due', 'deps', 'gates'];
+  static FIELDS = ['name', 'desc', 'parent', 'mrows', 'start', 'due', 'deps', 'gates'];
   static ls(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   static lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
@@ -554,6 +580,7 @@ class Component extends DCLogic {
     noteDraft: '', raw: {}, hideDone: false, selHook: '', selUser: '', newToken: '', tokUser: '', newSecret: '', config: { stale: 72, dueSoon: 24 }, cfgDraft: null,
     tokenLabel: '', tokens: (function () { try { const j = JSON.parse(Component.ls('ghh.tokens', 'null')); if (j) return j; } catch (e) {} return []; })(),
     hookEdits: {}, hookNew: [], pedit: null, uedit: null, medit: null,
+    open: (function () { try { const j = JSON.parse(Component.ls('ghh.open', 'null')); if (j) return j; } catch (e) {} return {}; })(),
     view: 'tasks', filter: 'all', q: '', sel: '', proj: 'all', selProj: '', panel: null, outcome: '', handTo: '', handNote: '', draft: null, toast: null
   };
 
@@ -624,7 +651,11 @@ class Component extends DCLogic {
     if (!id) return;
     try { const items = await GHH.all('query.events', { task_id: id }, 10); this.setState(s => ({ evs: Object.assign({}, s.evs, { [id]: items }) })); } catch (e) {}
   }
-  pick(id) { this.setState({ sel: id, panel: null }); this.loadEvents(id); }
+  pick(id) { this.setState({ sel: id, panel: null }); this.expand(this.ancestors(id)); this.loadEvents(id); }
+  // Expanded parents in the task list; subtasks start collapsed.
+  setOpen(next) { this.setState({ open: next }); Component.lsSet('ghh.open', JSON.stringify(next)); }
+  expand(ids) { if (ids.some(id => !this.state.open[id])) this.setOpen(Object.assign({}, this.state.open, Object.fromEntries(ids.map(id => [id, true])))); }
+  toggleOpen(id) { const next = Object.assign({}, this.state.open); if (next[id]) delete next[id]; else next[id] = true; this.setOpen(next); }
   fail(e) { this.say(e.code || 'error', e.message); if (e.code === 'version_conflict') this.reload('hot'); }
   async run(op, args, okMsg) {
     try { const r = await GHH.mutate(op, args); this.say(op, okMsg || 'Done', true); if (/^task\./.test(op)) this.patchTask(r); else this.patchEntity(op, r); this.after(/^(task|dependency|notification)\./.test(op) ? 'hot' : 'full'); return r; }
@@ -653,6 +684,14 @@ class Component extends DCLogic {
     const seen = new Set(); const walk = id => { if (id === target) return true; if (seen.has(id)) return false; seen.add(id); return this.tk(id).deps.some(walk); };
     return walk(from);
   }
+  kids(id) { return this.state.tasks.filter(t => t.parent === id); }
+  // Parent chain, nearest first; stops at a parent this user cannot see.
+  ancestors(id) {
+    const out = []; let cur = this.state.tasks.find(t => t.id === id);
+    while (cur && cur.parent && !out.includes(cur.parent)) { out.push(cur.parent); cur = this.state.tasks.find(t => t.id === cur.parent); }
+    return out;
+  }
+  descendants(id) { const out = new Set(), walk = x => this.kids(x).forEach(k => { if (!out.has(k.id)) { out.add(k.id); walk(k.id); } }); walk(id); return out; }
   visible() {
     const { tasks, filter, proj, q, hideDone, me } = this.state;
     return tasks.filter(t => {
@@ -693,7 +732,7 @@ class Component extends DCLogic {
   // Task rows; a row holding only a value for a slot is a fill, edited in the slot's row.
   base(t) {
     const slots = this.slotKeys(t), mrows = GHH.metaRows(t.meta).map(r => slots.has(r.key) && !r.level && !r.desc && !r.kindSet ? Object.assign(r, { fill: true }) : r);
-    return { name: t.name, desc: t.desc, mrows, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) };
+    return { name: t.name, desc: t.desc, parent: t.parent || '', mrows, start: t.start, due: t.due, deps: t.deps.slice(), gates: this.gatesOf(t.id) };
   }
   // "Start needs …" / "Finish needs …" from the saved meta, for open tasks.
   gateText(t) {
@@ -757,6 +796,7 @@ class Component extends DCLogic {
     const u = {};
     if (ch.includes('name')) u.name = F.name.trim();
     if (ch.includes('desc')) u.description = F.desc;
+    if (ch.includes('parent')) u.parent_id = F.parent || null;
     if (pm) { const patch = GHH.metaPatch(t.meta, pm.meta); if (Object.keys(patch).length) u.meta = patch; }
     if (ch.includes('start') || ch.includes('due')) u.scheduling = { start: GHH.toMs(F.start), due: GHH.toMs(F.due) };
     try {
@@ -908,20 +948,32 @@ class Component extends DCLogic {
     const titles = { graph: 'Dependency graph', settings: 'Settings', admin: 'Admin', tasks: 'Tasks', inbox: 'Inbox', projects: 'Projects', delegation: 'Delegation', scheduled: 'Scheduled', active: 'Active' };
     const tabKey = S.view === 'tasks' ? (S.filter === 'all' ? 'tasks' : S.filter) : S.view;
     const list = this.visible();
-    const rows = list.map(t => {
+    // Subtasks stack under their parent. A task whose parent is not in the list shows at the top with "in <parent>".
+    const ids = new Set(list.map(t => t.id)), under = {};
+    list.forEach(t => { const k = t.parent && ids.has(t.parent) ? t.parent : ''; (under[k] = under[k] || []).push(t); });
+    const opened = Object.assign({}, S.open);
+    if (S.q) list.forEach(t => this.ancestors(t.id).forEach(a => { opened[a] = true; }));
+    const rows = [];
+    const walk = (t, depth) => {
       const e = this.eff(t), [state, dot] = this.stateInfo(e), u = this.user(t.as), a = this.av(u);
       const waiting = t.deps.map(d => this.tk(d)).filter(d => d.status !== 'done');
+      const shown = under[t.id] || [], kids = this.kids(t.id).filter(k => k.status !== 'canceled'), isOpen = !!opened[t.id] && shown.length > 0;
       let hint = '', hintColor = '#e0a14a';
       if (e === 'blocked') hint = 'waiting on ' + waiting.map(d => d.name).join(', ');
       else if (t.stale && e === 'active') { hint = 'stale'; hintColor = '#8a95a1'; }
-      return {
+      if (t.parent && !ids.has(t.parent)) { hint = 'in ' + this.tk(t.parent).name + (hint ? ' · ' + hint : ''); if (e !== 'blocked') hintColor = '#8a95a1'; }
+      rows.push({
         name: t.name, desc: t.desc, state, dot, hint, hintColor,
+        pad: 14 + Math.min(depth, 4) * 18, chev: shown.length ? (isOpen ? '▾' : '▸') : '', toggle: ev => { if (ev && ev.stopPropagation) ev.stopPropagation(); if (shown.length) this.toggleOpen(t.id); },
+        subCount: kids.length ? kids.filter(k => k.status === 'done').length + '/' + kids.length + ' done' : '',
         asName: u ? u.name : 'Unassigned', asColor: u ? '#e4e9ee' : '#8a95a1', avRadius: a.r, avBg: a.bg, avFg: a.fg, ini: a.ini,
         start: this.fmt(t.start), due: this.fmt(t.due), dueColor: this.overdue(t) ? '#f0837a' : '#8a95a1',
         bg: S.sel === t.id ? '#1a2027' : 'transparent', bar: S.sel === t.id ? '#6cb0ff' : 'transparent',
         open: () => this.pick(t.id)
-      };
-    });
+      });
+      if (isOpen) shown.forEach(c => walk(c, depth + 1));
+    };
+    (under[''] || []).forEach(t => walk(t, 0));
     const projPills = [{ id: 'all', name: 'All projects' }].concat(P).map(p => ({
       label: p.name, go: () => this.setState({ proj: p.id }),
       bg: S.proj === p.id ? '#21262d' : 'transparent', bd: S.proj === p.id ? '#3a444f' : '#29313a', fg: S.proj === p.id ? '#e4e9ee' : '#8a95a1'
@@ -990,11 +1042,13 @@ class Component extends DCLogic {
         if (e === 'blocked') return this.say('blocked', 'Waiting on ' + t.deps.map(d => this.tk(d)).filter(d => d.status !== 'done').map(d => d.name).join(', ') + '.');
         this.act(t, 'task.start', null, 'Started.');
       };
-      const openFinish = () => this.setState({ panel: 'finish', outcome: '' });
+      // GHH refuses to finish a parent while a subtask is planned or active.
+      const openKids = this.kids(t.id).filter(k => k.status === 'planned' || k.status === 'active');
+      const openFinish = () => (openKids.length ? this.say('open_subtasks', 'Open subtasks: ' + openKids.map(k => k.name).join(', ') + '.') : this.setState({ panel: 'finish', outcome: '' }));
       const finish = () => (e === 'blocked' ? this.say('blocked', 'Waiting on ' + t.deps.map(d => this.tk(d)).filter(d => d.status !== 'done').map(d => d.name).join(', ') + '.') : openFinish());
-      if (t.status === 'planned') { actions.push(act('Start', start, e === 'blocked' ? '' : 'primary', e === 'blocked' ? 0.5 : 1)); actions.push(act('Finish', finish, '', e === 'blocked' ? 0.5 : 1)); actions.push(act('Cancel task', () => this.act(t, 'task.cancel', null, 'Canceled.'), 'danger')); }
+      if (t.status === 'planned') { actions.push(act('Start', start, e === 'blocked' ? '' : 'primary', e === 'blocked' ? 0.5 : 1)); actions.push(act('Finish', finish, '', e === 'blocked' || openKids.length ? 0.5 : 1)); actions.push(act('Cancel task', () => this.act(t, 'task.cancel', null, 'Canceled.'), 'danger')); }
       if (t.status === 'active') {
-        actions.push(act('Finish', openFinish, e === 'blocked' ? '' : 'primary'));
+        actions.push(act('Finish', openFinish, e === 'blocked' || openKids.length ? '' : 'primary', openKids.length ? 0.5 : 1));
         actions.push(act('Hand off', () => this.setState({ panel: 'handoff' })));
         actions.push(act('Unclaim', () => this.act(t, 'task.unclaim', null, 'Unclaimed.')));
         actions.push(act('Cancel task', () => this.act(t, 'task.cancel', null, 'Canceled.'), 'danger'));
@@ -1006,6 +1060,11 @@ class Component extends DCLogic {
         return { name: d.name, state: s, dot: c, open: () => this.pick(id), remove: () => this.edit(t, 'deps', fd.deps.filter(y => y !== id)) }; });
       const dependents = fd.gates.map(id => ({ name: this.tk(id).name, open: () => this.pick(id), remove: () => this.edit(t, 'gates', fd.gates.filter(y => y !== id)) }));
       depOptions = S.tasks.filter(x => x.id !== t.id && !fd.deps.includes(x.id)).map(x => ({ id: x.id, label: x.name }));
+      const below = this.descendants(t.id);
+      const parentOptions = [{ id: '', label: 'None (top-level)' }].concat(S.tasks.filter(x => x.p === t.p && x.id !== t.id && !below.has(x.id)).map(x => ({ id: x.id, label: x.name })));
+      if (fd.parent && !parentOptions.some(o => o.id === fd.parent)) parentOptions.push({ id: fd.parent, label: this.tk(fd.parent).name });
+      const trail = this.ancestors(t.id).reverse().map(id => ({ name: this.tk(id).name, open: () => this.pick(id) }));
+      const subs = this.kids(t.id).map(k => { const [s, c] = this.stateInfo(this.eff(k)), u = this.user(k.as); return { name: k.name, state: s, dot: c, asName: u ? u.name : 'Unassigned', open: () => this.pick(k.id) }; });
       const mem = this.members(t.p);
       handOptions = mem.filter(u => !u.system && u.id !== t.as).map(u => ({ id: u.id, label: this.label(u) }));
       hto = handOptions.some(o => o.id === S.handTo) ? S.handTo : (handOptions[0] ? handOptions[0].id : '');
@@ -1050,6 +1109,8 @@ class Component extends DCLogic {
           this.say('invalid_transition', t.status === 'planned' ? 'A planned task cannot be unassigned; assign someone else.' : t.status === 'active' ? 'Use Hand off to give an active task to someone else.' : 'Reopen the task before changing its assignee.');
           this.forceUpdate && this.forceUpdate();
         },
+        parent: fd.parent, setParent: setF('parent'), parentOptions, trail, hasTrail: trail.length > 0,
+        subs, noSubs: subs.length === 0, addSub: async () => { const r = await this.run('task.create', { project_id: t.p, name: 'Untitled subtask', parent_id: t.id }, 'Subtask created.'); if (r) this.pick(r.id); },
         deps, noDeps: deps.length === 0, dependents, hasDependents: dependents.length > 0, events };
     }
     const toast = S.toast, nar = S.w < 1150;
